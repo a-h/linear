@@ -1,4 +1,4 @@
-package linear
+package main
 
 import "testing"
 
@@ -305,6 +305,49 @@ func TestVectorMultiplication(t *testing.T) {
 			if test.expectedErrorMessage != err.Error() {
 				t.Errorf("%s: For %v * %v, expected error message '%v', but got '%v'", test.name, test.a, test.b, test.expectedErrorMessage, err)
 			}
+		}
+	}
+}
+
+func TestVectorScalarMultiplication(t *testing.T) {
+	tests := []struct {
+		name                 string
+		a                    Vector
+		scalar               float64
+		expected             Vector
+		expectedErrorMessage string
+	}{
+		{
+			name:     "Positive",
+			a:        NewVector(3, 4),
+			scalar:   3,
+			expected: NewVector(9, 12),
+		},
+		{
+			name:     "Zeroes",
+			a:        NewVector(0, 1),
+			scalar:   12,
+			expected: NewVector(0, 12),
+		},
+		{
+			name:     "Negatives",
+			a:        NewVector(-4, 6),
+			scalar:   -4,
+			expected: NewVector(16, -24),
+		},
+		{
+			name:     "Three dimensions",
+			a:        NewVector(1, 2, 3),
+			scalar:   0.5,
+			expected: NewVector(0.5, 1, 1.5),
+		},
+	}
+
+	for _, test := range tests {
+		actual := test.a.Scale(test.scalar)
+
+		if !actual.Eq(test.expected) {
+			t.Errorf("%s: For %v * %f, expected '%v', but got '%v'", test.name, test.a, test.scalar, test.expected, actual)
 		}
 	}
 }

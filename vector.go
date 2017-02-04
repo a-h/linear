@@ -1,4 +1,4 @@
-package linear
+package main
 
 import (
 	"bytes"
@@ -76,4 +76,13 @@ func (v1 Vector) Mul(v2 Vector) (Vector, error) {
 		op[i] = v1[i] * v2[i]
 	}
 	return Vector(op), nil
+}
+
+// Scale muliplies the current vector by the scalar input and returns a new vector.
+func (v1 Vector) Scale(scalar float64) Vector {
+	op := make([]float64, len(v1))
+	for i := 0; i < len(v1); i++ {
+		op[i] = v1[i] * scalar
+	}
+	return Vector(op)
 }
