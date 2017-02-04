@@ -71,3 +71,57 @@ func TestVectorStringRepresentations(t *testing.T) {
 		}
 	}
 }
+
+func TestVectorEquality(t *testing.T) {
+	tests := []struct {
+		name     string
+		a        Vector
+		b        Vector
+		expected bool
+	}{
+		{
+			name:     "Different dimensions (1:2)",
+			a:        NewVector(1),
+			b:        NewVector(1, 1),
+			expected: false,
+		},
+		{
+			name:     "Different dimensions (2:1)",
+			a:        NewVector(1, 1),
+			b:        NewVector(1),
+			expected: false,
+		},
+		{
+			name:     "Single dimension, different values",
+			a:        NewVector(1),
+			b:        NewVector(2),
+			expected: false,
+		},
+		{
+			name:     "Single dimension, same values",
+			a:        NewVector(1),
+			b:        NewVector(1),
+			expected: true,
+		},
+		{
+			name:     "Multiple dimensions, same values",
+			a:        NewVector(1, 2, 3, 4, 5),
+			b:        NewVector(1, 2, 3, 4, 5),
+			expected: true,
+		},
+		{
+			name:     "Multiple dimensions, different values",
+			a:        NewVector(1, 2, 3, 4, 5),
+			b:        NewVector(1, 2, 3, 4, 4),
+			expected: false,
+		},
+	}
+
+	for _, test := range tests {
+		actual := test.a.Eq(test.b)
+
+		if actual != test.expected {
+			t.Errorf("%s: For %v and %v, expected '%v', but got '%v'", test.name, test.a, test.b, test.expected, actual)
+		}
+	}
+}
