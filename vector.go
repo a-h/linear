@@ -53,3 +53,15 @@ func (v1 Vector) Add(v2 Vector) (Vector, error) {
 	}
 	return Vector(op), nil
 }
+
+// Sub subtracts the input vector from the current vector and returns a new vector.
+func (v1 Vector) Sub(v2 Vector) (Vector, error) {
+	if len(v1) != len(v2) {
+		return Vector{}, fmt.Errorf("cannot subtract vectors because they have different dimensions (%d and %d)", len(v1), len(v2))
+	}
+	op := make([]float64, len(v1))
+	for i := 0; i < len(v1); i++ {
+		op[i] = v1[i] - v2[i]
+	}
+	return Vector(op), nil
+}

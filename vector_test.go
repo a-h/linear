@@ -186,3 +186,64 @@ func TestVectorAddition(t *testing.T) {
 		}
 	}
 }
+
+func TestVectorSubtraction(t *testing.T) {
+	tests := []struct {
+		name                 string
+		a                    Vector
+		b                    Vector
+		expected             Vector
+		expectedErrorMessage string
+	}{
+		{
+			name:     "Positive",
+			a:        NewVector(1, 1),
+			b:        NewVector(1, 1),
+			expected: NewVector(0, 0),
+		},
+		{
+			name:     "Zeroes",
+			a:        NewVector(0, 1),
+			b:        NewVector(0, 3),
+			expected: NewVector(0, -2),
+		},
+		{
+			name:     "Negatives",
+			a:        NewVector(-4, -6),
+			b:        NewVector(-4, -6),
+			expected: NewVector(0, 0),
+		},
+		{
+			name:     "Three dimensions",
+			a:        NewVector(-1, -2, -3),
+			b:        NewVector(1, 2, 3),
+			expected: NewVector(-2, -4, -6),
+		},
+		{
+			name:                 "Mismatched dimensions",
+			a:                    NewVector(1),
+			b:                    NewVector(1, 2),
+			expected:             Vector{},
+			expectedErrorMessage: "cannot subtract vectors because they have different dimensions (1 and 2)",
+		},
+	}
+
+	for _, test := range tests {
+		actual, err := test.a.Sub(test.b)
+
+		if !actual.Eq(test.expected) {
+			t.Errorf("%s: For %v + %v, expected '%v', but got '%v'", test.name, test.a, test.b, test.expected, actual)
+		}
+
+		if err != nil {
+			if test.expectedErrorMessage == "" {
+				t.Errorf("%s: For %v + %v, no error was expected, but got '%v'", test.name, test.a, test.b, err)
+				continue
+			}
+
+			if test.expectedErrorMessage != err.Error() {
+				t.Errorf("%s: For %v + %v, expected error message '%v', but got '%v'", test.name, test.a, test.b, test.expectedErrorMessage, err)
+			}
+		}
+	}
+}
