@@ -232,17 +232,78 @@ func TestVectorSubtraction(t *testing.T) {
 		actual, err := test.a.Sub(test.b)
 
 		if !actual.Eq(test.expected) {
-			t.Errorf("%s: For %v + %v, expected '%v', but got '%v'", test.name, test.a, test.b, test.expected, actual)
+			t.Errorf("%s: For %v - %v, expected '%v', but got '%v'", test.name, test.a, test.b, test.expected, actual)
 		}
 
 		if err != nil {
 			if test.expectedErrorMessage == "" {
-				t.Errorf("%s: For %v + %v, no error was expected, but got '%v'", test.name, test.a, test.b, err)
+				t.Errorf("%s: For %v - %v, no error was expected, but got '%v'", test.name, test.a, test.b, err)
 				continue
 			}
 
 			if test.expectedErrorMessage != err.Error() {
-				t.Errorf("%s: For %v + %v, expected error message '%v', but got '%v'", test.name, test.a, test.b, test.expectedErrorMessage, err)
+				t.Errorf("%s: For %v - %v, expected error message '%v', but got '%v'", test.name, test.a, test.b, test.expectedErrorMessage, err)
+			}
+		}
+	}
+}
+
+func TestVectorMultiplication(t *testing.T) {
+	tests := []struct {
+		name                 string
+		a                    Vector
+		b                    Vector
+		expected             Vector
+		expectedErrorMessage string
+	}{
+		{
+			name:     "Positive",
+			a:        NewVector(3, 4),
+			b:        NewVector(3, 4),
+			expected: NewVector(9, 16),
+		},
+		{
+			name:     "Zeroes",
+			a:        NewVector(0, 1),
+			b:        NewVector(6, 3),
+			expected: NewVector(0, 3),
+		},
+		{
+			name:     "Negatives",
+			a:        NewVector(-4, -6),
+			b:        NewVector(-4, 6),
+			expected: NewVector(16, -36),
+		},
+		{
+			name:     "Three dimensions",
+			a:        NewVector(-1, -2, 3),
+			b:        NewVector(1, 2, -3),
+			expected: NewVector(-1, -4, -9),
+		},
+		{
+			name:                 "Mismatched dimensions",
+			a:                    NewVector(1),
+			b:                    NewVector(1, 2),
+			expected:             Vector{},
+			expectedErrorMessage: "cannot multiply vectors because they have different dimensions (1 and 2)",
+		},
+	}
+
+	for _, test := range tests {
+		actual, err := test.a.Mul(test.b)
+
+		if !actual.Eq(test.expected) {
+			t.Errorf("%s: For %v * %v, expected '%v', but got '%v'", test.name, test.a, test.b, test.expected, actual)
+		}
+
+		if err != nil {
+			if test.expectedErrorMessage == "" {
+				t.Errorf("%s: For %v * %v, no error was expected, but got '%v'", test.name, test.a, test.b, err)
+				continue
+			}
+
+			if test.expectedErrorMessage != err.Error() {
+				t.Errorf("%s: For %v * %v, expected error message '%v', but got '%v'", test.name, test.a, test.b, test.expectedErrorMessage, err)
 			}
 		}
 	}
