@@ -131,3 +131,26 @@ func (v1 Vector) IsZeroVector() bool {
 	}
 	return true
 }
+
+// DotProduct calculates the dot product of the current vector and the input vector, or an error if the dimensions
+// of the vectors do not match.
+func (v1 Vector) DotProduct(v2 Vector) (float64, error) {
+	var rv float64
+	if len(v1) != len(v2) {
+		return rv, fmt.Errorf("cannot calculate the dot product of the vectors because they have different dimensions (%d and %d)", len(v1), len(v2))
+	}
+	for i := 0; i < len(v1); i++ {
+		rv += v1[i] * v2[i]
+	}
+	return rv, nil
+}
+
+// AngleBetween returns the angle (in radians) between the current vector and v2, or an error if the dimensions of
+// the vectors do not match.
+func (v1 Vector) AngleBetween(v2 Vector) (Radian, error) {
+	dp, err := v1.DotProduct(v2)
+	if err != nil {
+		return 0, err
+	}
+	return Radian(math.Acos(dp / (v1.Magnitude() * v2.Magnitude()))), nil
+}

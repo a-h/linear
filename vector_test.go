@@ -559,3 +559,131 @@ func TestVectorNormalization(t *testing.T) {
 		}
 	}
 }
+
+func TestDotProduct(t *testing.T) {
+	tests := []struct {
+		name                 string
+		a                    Vector
+		b                    Vector
+		expected             float64
+		expectedErrorMessage string
+	}{
+		{
+			name:     "Positive",
+			a:        NewVector(3, 4),
+			b:        NewVector(3, 4),
+			expected: (3 * 3) + (4 * 4),
+		},
+		{
+			name:     "Zeroes",
+			a:        NewVector(0, 3),
+			b:        NewVector(3, 0),
+			expected: 0,
+		},
+		{
+			name:     "Negatives",
+			a:        NewVector(-4, 4),
+			b:        NewVector(4, 6),
+			expected: (-4 * 4) + (4 * 6),
+		},
+		{
+			name:     "Three dimensions",
+			a:        NewVector(-1, -2, 3),
+			b:        NewVector(1, 2, -3),
+			expected: (-1 * 1) + (-2 * 2) + (3 * -3),
+		},
+		{
+			name:                 "Mismatched dimensions",
+			a:                    NewVector(1),
+			b:                    NewVector(1, 2),
+			expected:             0,
+			expectedErrorMessage: "cannot calculate the dot product of the vectors because they have different dimensions (1 and 2)",
+		},
+	}
+
+	for _, test := range tests {
+		actual, err := test.a.DotProduct(test.b)
+
+		if actual != test.expected {
+			t.Errorf("%s: For the dot product of %v and %v, expected '%v', but got '%v'", test.name, test.a, test.b, test.expected, actual)
+		}
+
+		if err != nil {
+			if test.expectedErrorMessage == "" {
+				t.Errorf("%s: For the dot product of %v and %v, no error was expected, but got '%v'", test.name, test.a, test.b, err)
+				continue
+			}
+
+			if test.expectedErrorMessage != err.Error() {
+				t.Errorf("%s: For the dot proudct of %v and %v, expected error message '%v', but got '%v'", test.name, test.a, test.b, test.expectedErrorMessage, err)
+			}
+		}
+	}
+}
+
+func TestAngleBetweenFunction(t *testing.T) {
+	tests := []struct {
+		name                 string
+		a                    Vector
+		b                    Vector
+		expected             Radian
+		expectedErrorMessage string
+	}{
+		{
+			name:     "Right angled triangle (3, 4, 5)",
+			a:        NewVector(3, 0),
+			b:        NewVector(0, 4),
+			expected: 1.5708, // 90 degrees
+		},
+		{
+			name:     "Triangle (8, 6, 10)",
+			a:        NewVector(8, 6),
+			b:        NewVector(8, 0),
+			expected: 0.6440265, // 36.9 degrees
+		},
+		{
+			name:     "Triangle (8, 6, 10)",
+			a:        NewVector(-8, -6),
+			b:        NewVector(0, -6),
+			expected: 0.9267698, // 53.1 degrees
+		},
+		{
+			name:     "Equilateral triangle in 3 dimensions (1)",
+			a:        NewVector(1, 0, 1),
+			b:        NewVector(0, 1, 1),
+			expected: 1.0472, // 60 degrees
+		},
+		{
+			name:     "Equilateral triangle in 3 dimensions (2)",
+			a:        NewVector(0, 1, 1),
+			b:        NewVector(1, 1, 0),
+			expected: 1.0472, // 60 degrees
+		},
+		{
+			name:                 "Mismatched dimensions",
+			a:                    NewVector(1),
+			b:                    NewVector(1, 2),
+			expected:             0,
+			expectedErrorMessage: "cannot calculate the dot product of the vectors because they have different dimensions (1 and 2)",
+		},
+	}
+
+	for _, test := range tests {
+		actual, err := test.a.AngleBetween(test.b)
+
+		if !tolerance.IsWithin(float64(actual), float64(test.expected), tolerance.ThreeDecimalPlaces) {
+			t.Errorf("%s: For the angle between %v and %v, expected %f radians, but got %f", test.name, test.a, test.b, test.expected, actual)
+		}
+
+		if err != nil {
+			if test.expectedErrorMessage == "" {
+				t.Errorf("%s: For the angle between %v and %v, no error was expected, but got '%v'", test.name, test.a, test.b, err)
+				continue
+			}
+
+			if test.expectedErrorMessage != err.Error() {
+				t.Errorf("%s: For the angle between %v and %v, expected error message '%v', but got '%v'", test.name, test.a, test.b, test.expectedErrorMessage, err)
+			}
+		}
+	}
+}
