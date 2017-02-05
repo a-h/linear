@@ -1,8 +1,9 @@
-package main
+package linear
 
 import (
 	"bytes"
 	"fmt"
+	"math"
 )
 
 // Vector represents an array of values.
@@ -85,4 +86,14 @@ func (v1 Vector) Scale(scalar float64) Vector {
 		op[i] = v1[i] * scalar
 	}
 	return Vector(op)
+}
+
+// Magnitude calculates the magnitude of the vector by calculating the square root of
+// the sum of each element squared.
+func (v1 Vector) Magnitude() float64 {
+	var sumOfSquares float64
+	for _, v := range v1 {
+		sumOfSquares += (v * v)
+	}
+	return math.Sqrt(sumOfSquares)
 }

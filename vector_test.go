@@ -1,6 +1,7 @@
-package main
+package linear
 
 import "testing"
+import "math"
 
 func TestCreatingVectorsUsingVariadicInput(t *testing.T) {
 	v := NewVector(1, 2)
@@ -311,11 +312,10 @@ func TestVectorMultiplication(t *testing.T) {
 
 func TestVectorScalarMultiplication(t *testing.T) {
 	tests := []struct {
-		name                 string
-		a                    Vector
-		scalar               float64
-		expected             Vector
-		expectedErrorMessage string
+		name     string
+		a        Vector
+		scalar   float64
+		expected Vector
 	}{
 		{
 			name:     "Positive",
@@ -348,6 +348,43 @@ func TestVectorScalarMultiplication(t *testing.T) {
 
 		if !actual.Eq(test.expected) {
 			t.Errorf("%s: For %v * %f, expected '%v', but got '%v'", test.name, test.a, test.scalar, test.expected, actual)
+		}
+	}
+}
+
+func TestVectorMagnitudeCalculation(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    Vector
+		expected float64
+	}{
+		{
+			name:     "Pythagoran triangle",
+			input:    NewVector(4, 3),
+			expected: 5,
+		},
+		{
+			name:     "Ones",
+			input:    NewVector(1, 1, 1),
+			expected: math.Sqrt(1 + 1 + 1),
+		},
+		{
+			name:     "Zeroes",
+			input:    NewVector(0, 0, 0, 0),
+			expected: 0,
+		},
+		{
+			name:     "Negative numbers",
+			input:    NewVector(-4, 3),
+			expected: 5,
+		},
+	}
+
+	for _, test := range tests {
+		actual := test.input.Magnitude()
+
+		if actual != test.expected {
+			t.Errorf("%s: For the magnitude of %v, expected '%f', but got '%f'", test.name, test.input, test.expected, actual)
 		}
 	}
 }
