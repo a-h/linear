@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+
+	tolerancepkg "github.com/a-h/linear/tolerance"
 )
 
 // Vector represents an array of values.
@@ -37,6 +39,19 @@ func (v1 Vector) Eq(v2 Vector) bool {
 	}
 	for i := 0; i < len(v2); i++ {
 		if v1[i] != v2[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// EqWithinTolerance tests that a vector is equal, within a given tolerance.
+func (v1 Vector) EqWithinTolerance(v2 Vector, tolerance float64) bool {
+	if len(v1) != len(v2) {
+		return false
+	}
+	for i := 0; i < len(v2); i++ {
+		if !tolerancepkg.IsWithin(v1[i], v2[i], tolerance) {
 			return false
 		}
 	}
@@ -96,4 +111,23 @@ func (v1 Vector) Magnitude() float64 {
 		sumOfSquares += (v * v)
 	}
 	return math.Sqrt(sumOfSquares)
+}
+
+// Direction calculates the direction of the vector by normalizing its length to 1.
+func (v1 Vector) Direction() Vector {
+	mag := v1.Magnitude()
+	if mag == 0 {
+		return Vector(make([]float64, len(v1))) // Return a vector of zeroes if the magnitude is zero.
+	}
+	return v1.Scale(float64(1.0) / mag)
+}
+
+// IsZeroVector returns true if all of the values in the vector are zero.
+func (v1 Vector) IsZeroVector() bool {
+	for _, v := range v1 {
+		if v != 0 {
+			return false
+		}
+	}
+	return true
 }

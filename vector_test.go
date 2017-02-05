@@ -1,7 +1,11 @@
 package linear
 
-import "testing"
-import "math"
+import (
+	"math"
+	"testing"
+
+	"github.com/a-h/linear/tolerance"
+)
 
 func TestCreatingVectorsUsingVariadicInput(t *testing.T) {
 	v := NewVector(1, 2)
@@ -123,6 +127,88 @@ func TestVectorEquality(t *testing.T) {
 
 		if actual != test.expected {
 			t.Errorf("%s: For %v and %v, expected '%v', but got '%v'", test.name, test.a, test.b, test.expected, actual)
+		}
+	}
+}
+
+func TestVectorEqualityWithinTolerance(t *testing.T) {
+	tests := []struct {
+		name      string
+		a         Vector
+		b         Vector
+		tolerance float64
+		expected  bool
+	}{
+		{
+			name:      "Different dimensions (1:2)",
+			a:         NewVector(1),
+			b:         NewVector(1, 1),
+			tolerance: float64(0),
+			expected:  false,
+		},
+		{
+			name:      "Different dimensions (2:1)",
+			a:         NewVector(1, 1),
+			b:         NewVector(1),
+			tolerance: float64(0),
+			expected:  false,
+		},
+		{
+			name:      "Single dimension, different values",
+			a:         NewVector(1),
+			b:         NewVector(2),
+			tolerance: float64(0),
+			expected:  false,
+		},
+		{
+			name:      "Single dimension, same values",
+			a:         NewVector(1),
+			b:         NewVector(1),
+			tolerance: float64(0),
+			expected:  true,
+		},
+		{
+			name:      "Multiple dimensions, same values",
+			a:         NewVector(1, 2, 3, 4, 5),
+			b:         NewVector(1, 2, 3, 4, 5),
+			tolerance: float64(0),
+			expected:  true,
+		},
+		{
+			name:      "Multiple dimensions, different values",
+			a:         NewVector(1, 2, 3, 4, 5),
+			b:         NewVector(1, 2, 3, 4, 4),
+			tolerance: float64(0),
+			expected:  false,
+		},
+		{
+			name:      "One decimal place",
+			a:         NewVector(1, 1),
+			b:         NewVector(1.1, 1.1),
+			tolerance: tolerance.OneDecimalPlace,
+			expected:  true,
+		},
+		{
+			name:      "Two decimal places",
+			a:         NewVector(1, 1),
+			b:         NewVector(1.1, 1.1),
+			tolerance: tolerance.TwoDecimalPlaces,
+			expected:  false,
+		},
+		{
+			name:      "Three decimal places",
+			a:         NewVector(1, 1),
+			b:         NewVector(1.001, 1.001),
+			tolerance: tolerance.ThreeDecimalPlaces,
+			expected:  true,
+		},
+	}
+
+	for _, test := range tests {
+		actual := test.a.EqWithinTolerance(test.b, test.tolerance)
+
+		if actual != test.expected {
+			t.Errorf("%s: %v and %v within tolerance %f, expected '%v', but got '%v'", test.name, test.a, test.b, test.tolerance, test.expected, actual)
 		}
 	}
 }
@@ -378,6 +464,11 @@ func TestVectorMagnitudeCalculation(t *testing.T) {
 			input:    NewVector(-4, 3),
 			expected: 5,
 		},
+		{
+			name:     "Negative one",
+			input:    NewVector(-1, 1, 1),
+			expected: math.Sqrt(3),
+		},
 	}
 
 	for _, test := range tests {
@@ -385,6 +476,86 @@ func TestVectorMagnitudeCalculation(t *testing.T) {
 
 		if actual != test.expected {
 			t.Errorf("%s: For the magnitude of %v, expected '%f', but got '%f'", test.name, test.input, test.expected, actual)
+		}
+	}
+}
+
+func TestIsZeroVectorFunction(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    Vector
+		expected bool
+	}{
+		{
+			name:     "Empty",
+			input:    NewVector(),
+			expected: true,
+		},
+		{
+			name:     "Zeroes",
+			input:    NewVector(0, 0),
+			expected: true,
+		},
+		{
+			name:     "Negatives",
+			input:    NewVector(-5.581, -2.136),
+			expected: false,
+		},
+		{
+			name:     "Mixed zero",
+			input:    NewVector(0, 1),
+			expected: false,
+		},
+	}
+
+	for _, test := range tests {
+		actual := test.input.IsZeroVector()
+
+		if actual != test.expected {
+			t.Errorf("%s: Expected calculating whether %v is a zero vector to return %v, but got %v", test.name, test.input, test.expected, actual)
+		}
+	}
+}
+
+func TestVectorDirectionCalculation(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    Vector
+		expected Vector
+	}{
+		{
+			name:     "Pythagoran triple",
+			input:    NewVector(4, 3),
+			expected: NewVector(0.8, 0.6), // 4*(1/5) = 4 * 0.2 = 0.8, 3*(1/5) = 3 * 0.2 = 0.6
+		},
+		{
+			name:     "Zeroes",
+			input:    NewVector(0, 0),
+			expected: NewVector(0, 0),
+		},
+		{
+			name:     "Udacity example 1",
+			input:    NewVector(5.581, -2.136),
+			expected: NewVector(0.934, -0.357),
+		},
+		{
+			name:     "Udacity example 2",
+			input:    NewVector(1.996, 3.108, -4.554),
+			expected: NewVector(0.340, 0.530, -0.777),
+		},
+	}
+
+	for _, test := range tests {
+		actual := test.input.Direction()
+
+		if !actual.EqWithinTolerance(test.expected, tolerance.ThreeDecimalPlaces) {
+			t.Errorf("%s: For the direction of %v, expected %v, but got %v", test.name, test.input, test.expected, actual)
+		}
+
+		if !actual.IsZeroVector() {
+			if !tolerance.IsWithin(actual.Magnitude(), 1, tolerance.ThreeDecimalPlaces) {
+				t.Errorf("%s: The magnitude for a unit vector should always be one, but got %f", test.name, actual.Magnitude())
+			}
 		}
 	}
 }
