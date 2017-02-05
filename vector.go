@@ -113,8 +113,8 @@ func (v1 Vector) Magnitude() float64 {
 	return math.Sqrt(sumOfSquares)
 }
 
-// Direction calculates the direction of the vector by normalizing its length to 1.
-func (v1 Vector) Direction() Vector {
+// Normalize normalizes the magnitude of a vector to 1 and returns a new vector.
+func (v1 Vector) Normalize() Vector {
 	mag := v1.Magnitude()
 	if mag == 0 {
 		return Vector(make([]float64, len(v1))) // Return a vector of zeroes if the magnitude is zero.

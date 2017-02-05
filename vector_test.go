@@ -517,7 +517,7 @@ func TestIsZeroVectorFunction(t *testing.T) {
 	}
 }
 
-func TestVectorDirectionCalculation(t *testing.T) {
+func TestVectorNormalization(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    Vector
@@ -546,7 +546,7 @@ func TestVectorDirectionCalculation(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		actual := test.input.Direction()
+		actual := test.input.Normalize()
 
 		if !actual.EqWithinTolerance(test.expected, tolerance.ThreeDecimalPlaces) {
 			t.Errorf("%s: For the direction of %v, expected %v, but got %v", test.name, test.input, test.expected, actual)

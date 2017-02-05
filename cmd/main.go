@@ -43,8 +43,8 @@ func quiz2() {
 	fmt.Println(q1)
 	q2 := linear.NewVector(8.813, -1.331, -6.247).Magnitude()
 	fmt.Println(q2)
-	q3 := linear.NewVector(5.581, -2.136).Direction()
+	q3 := linear.NewVector(5.581, -2.136).Normalize()
 	fmt.Println(q3)
-	q4 := linear.NewVector(1.996, 3.108, -4.554).Direction()
+	q4 := linear.NewVector(1.996, 3.108, -4.554).Normalize()
 	fmt.Println(q4)
 }
