@@ -687,3 +687,126 @@ func TestAngleBetweenFunction(t *testing.T) {
 		}
 	}
 }
+
+func TestIsParallelToFunction(t *testing.T) {
+	tests := []struct {
+		name                 string
+		a                    Vector
+		b                    Vector
+		expected             bool
+		expectedErrorMessage string
+	}{
+		{
+			name:     "Exact",
+			a:        NewVector(0, 3),
+			b:        NewVector(0, 3),
+			expected: true,
+		},
+		{
+			name:     "Twice the size",
+			a:        NewVector(1, 1),
+			b:        NewVector(2, 2),
+			expected: true,
+		},
+		{
+			name:     "Triple the size",
+			a:        NewVector(2, 3, 1),
+			b:        NewVector(6, 9, 3),
+			expected: true,
+		},
+		{
+			name:     "Opposite direction",
+			a:        NewVector(-2, -2),
+			b:        NewVector(2, 2),
+			expected: true,
+		},
+
+		{
+			name:                 "Different sizes",
+			a:                    NewVector(-2, -2, -1),
+			b:                    NewVector(2, 2),
+			expected:             false,
+			expectedErrorMessage: "cannot calculate whether the vectors are parallel because they have different dimensions (3 and 2)",
+		},
+	}
+
+	for _, test := range tests {
+		actual, err := test.a.IsParallelTo(test.b)
+
+		if actual != test.expected {
+			t.Errorf("%s: For %v and %v - expected %v, but got %v", test.name, test.a, test.b, test.expected, actual)
+		}
+
+		if err != nil {
+			if test.expectedErrorMessage == "" {
+				t.Errorf("%s: For %v and %v, no error was expected, but got '%v'", test.name, test.a, test.b, err)
+				continue
+			}
+
+			if test.expectedErrorMessage != err.Error() {
+				t.Errorf("%s: For %v and %v, expected error message '%v', but got '%v'", test.name, test.a, test.b, test.expectedErrorMessage, err)
+			}
+		}
+	}
+}
+
+func TestIsOrthogonalToFunction(t *testing.T) {
+	tests := []struct {
+		name                 string
+		a                    Vector
+		b                    Vector
+		expected             bool
+		expectedErrorMessage string
+	}{
+		{
+			name:     "Equal",
+			a:        NewVector(1, 1),
+			b:        NewVector(1, 1),
+			expected: false,
+		},
+		{
+			name:     "Parallel",
+			a:        NewVector(1, 1),
+			b:        NewVector(2, 2),
+			expected: false,
+		},
+		{
+			name:     "Right angle",
+			a:        NewVector(5, 0),
+			b:        NewVector(0, 5),
+			expected: true,
+		},
+		{
+			name:     "Three dimsional angle",
+			a:        NewVector(5, 0, 5),
+			b:        NewVector(0, 5, 0),
+			expected: true,
+		},
+		{
+			name:                 "Different sizes",
+			a:                    NewVector(-2, -2, -1),
+			b:                    NewVector(2, 2),
+			expected:             false,
+			expectedErrorMessage: "error calculating whether the vectors are orthogonol: cannot calculate the dot product of the vectors are orthogonol because they have different dimensions (3 and 2)",
+		},
+	}
+
+	for _, test := range tests {
+		actual, err := test.a.IsOrthogonalTo(test.b)
+
+		if actual != test.expected {
+			t.Errorf("%s: For %v and %v - expected %v, but got %v", test.name, test.a, test.b, test.expected, actual)
+		}
+
+		if err != nil {
+			if test.expectedErrorMessage == "" {
+				t.Errorf("%s: For %v and %v, no error was expected, but got '%v'", test.name, test.a, test.b, err)
+				continue
+			}
+
+			if test.expectedErrorMessage != err.Error() {
+				t.Errorf("%s: For %v and %v, expected error message '%v', but got '%v'", test.name, test.a, test.b, test.expectedErrorMessage, err)
+			}
+		}
+	}
+}

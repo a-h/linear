@@ -154,3 +154,29 @@ func (v1 Vector) AngleBetween(v2 Vector) (Radian, error) {
 	}
 	return Radian(math.Acos(dp / (v1.Magnitude() * v2.Magnitude()))), nil
 }
+
+// IsParallelTo calculates whether the current vector is parallel to the input vector by normalizing both
+// vectors, and comparing them. In the case that the
+func (v1 Vector) IsParallelTo(v2 Vector) (bool, error) {
+	if len(v1) != len(v2) {
+		return false, fmt.Errorf("cannot calculate whether the vectors are parallel because they have different dimensions (%d and %d)", len(v1), len(v2))
+	}
+
+	u1 := v1.Normalize()
+	u2 := v2.Normalize()
+
+	parallelAndSameDirection := u1.Eq(u2)
+	parallelAndOppositeDirection := func() bool { return u1.Eq(u2.Scale(-1)) }
+
+	return parallelAndSameDirection || parallelAndOppositeDirection(), nil
+}
+
+// IsOrthogonalTo calculates whether the current vector is orthogonol to the input vector by calculating
+// the dot product. If the dot product is zero, then the vectors are orthogonol.
+func (v1 Vector) IsOrthogonalTo(v2 Vector) (bool, error) {
+	f, err := v1.DotProduct(v2)
+	if err != nil {
+		return false, fmt.Errorf("error calculating whether the vectors are orthogonol: %v", err)
+	}
+	return f == 0, nil
+}
