@@ -787,7 +787,7 @@ func TestIsOrthogonalToFunction(t *testing.T) {
 			a:                    NewVector(-2, -2, -1),
 			b:                    NewVector(2, 2),
 			expected:             false,
-			expectedErrorMessage: "error calculating whether the vectors are orthogonol: cannot calculate the dot product of the vectors are orthogonol because they have different dimensions (3 and 2)",
+			expectedErrorMessage: "error calculating whether the vectors are orthogonol: cannot calculate the dot product of the vectors because they have different dimensions (3 and 2)",
 		},
 	}
 
