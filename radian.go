@@ -11,7 +11,7 @@ func NewRadian(degrees float64) Radian {
 	return Radian(radians)
 }
 
-// Converts from radians to degrees.
+// Degrees converts from radians to degrees.
 func (r Radian) Degrees() float64 {
 	return float64(r) * (180 / math.Pi)
 }
