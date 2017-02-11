@@ -506,6 +506,11 @@ func TestIsZeroVectorFunction(t *testing.T) {
 			input:    NewVector(0, 1),
 			expected: false,
 		},
+		{
+			name:     "Close to zero",
+			input:    NewVector(0.00000000001, 0.0),
+			expected: true,
+		},
 	}
 
 	for _, test := range tests {
@@ -720,13 +725,30 @@ func TestIsParallelToFunction(t *testing.T) {
 			b:        NewVector(2, 2),
 			expected: true,
 		},
-
 		{
 			name:                 "Different sizes",
 			a:                    NewVector(-2, -2, -1),
 			b:                    NewVector(2, 2),
 			expected:             false,
 			expectedErrorMessage: "cannot calculate whether the vectors are parallel because they have different dimensions (3 and 2)",
+		},
+		{
+			name:     "Something to nothing",
+			a:        NewVector(0, 3),
+			b:        NewVector(0, 0),
+			expected: true,
+		},
+		{
+			name:     "Nothing to something",
+			a:        NewVector(0, 0, 0),
+			b:        NewVector(0, 0, 5),
+			expected: true,
+		},
+		{
+			name:     "Nothing to nothing",
+			a:        NewVector(0, 0, 0, 0),
+			b:        NewVector(0, 0, 0, 0),
+			expected: true,
 		},
 	}
 

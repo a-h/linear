@@ -16,6 +16,9 @@ func NewVector(values ...float64) Vector {
 	return Vector(values)
 }
 
+// DefaultTolerance is the tolerance to use for comparisons.
+const DefaultTolerance = 1e-10
+
 func (v1 Vector) String() string {
 	if len(v1) == 1 {
 		return fmt.Sprintf("[%v]", v1[0])
@@ -122,10 +125,10 @@ func (v1 Vector) Normalize() Vector {
 	return v1.Scale(float64(1.0) / mag)
 }
 
-// IsZeroVector returns true if all of the values in the vector are zero.
+// IsZeroVector returns true if all of the values in the vector are within tolerance of zero.
 func (v1 Vector) IsZeroVector() bool {
 	for _, v := range v1 {
-		if v != 0 {
+		if !tolerancepkg.IsWithin(v, 0, DefaultTolerance) {
 			return false
 		}
 	}
@@ -161,12 +164,15 @@ func (v1 Vector) IsParallelTo(v2 Vector) (bool, error) {
 	if len(v1) != len(v2) {
 		return false, fmt.Errorf("cannot calculate whether the vectors are parallel because they have different dimensions (%d and %d)", len(v1), len(v2))
 	}
+	if v1.IsZeroVector() || v2.IsZeroVector() {
+		return true, nil
+	}
 
 	u1 := v1.Normalize()
 	u2 := v2.Normalize()
 
-	parallelAndSameDirection := u1.Eq(u2)
-	parallelAndOppositeDirection := func() bool { return u1.Eq(u2.Scale(-1)) }
+	parallelAndSameDirection := u1.EqWithinTolerance(u2, DefaultTolerance)
+	parallelAndOppositeDirection := func() bool { return u1.EqWithinTolerance(u2.Scale(-1), DefaultTolerance) }
 
 	return parallelAndSameDirection || parallelAndOppositeDirection(), nil
 }
@@ -178,5 +184,5 @@ func (v1 Vector) IsOrthogonalTo(v2 Vector) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("error calculating whether the vectors are orthogonol: %v", err)
 	}
-	return f == 0, nil
+	return tolerancepkg.IsWithin(f, 0, DefaultTolerance), nil
 }
