@@ -1,18 +1,19 @@
 package linear
 
 import (
-	"math"
+	"math/big"
 	"testing"
 
+	"github.com/a-h/linear/bigfloat"
 	"github.com/a-h/linear/tolerance"
 )
 
 func TestCreatingVectorsUsingVariadicInput(t *testing.T) {
 	v := NewVector(1, 2)
-	if v[0] != 1 {
+	if v[0].Cmp(floatOne) != 0 {
 		t.Errorf("For index zero, expected 1, but got %d", v[0])
 	}
-	if v[1] != 2 {
+	if v[1].Cmp(newFloat().SetInt64(2)) != 0 {
 		t.Errorf("For index one, expected 2, but got %d", v[1])
 	}
 }
@@ -20,21 +21,21 @@ func TestCreatingVectorsUsingVariadicInput(t *testing.T) {
 func TestCreatingVectorsFromAnArray(t *testing.T) {
 	array := []float64{1, 2}
 	v := NewVector(array...)
-	if v[0] != 1 {
+	if v[0].Cmp(big.NewFloat(1)) != 0 {
 		t.Errorf("For index zero, expected 1, but got %d", v[0])
 	}
-	if v[1] != 2 {
+	if v[1].Cmp(big.NewFloat(2)) != 0 {
 		t.Errorf("For index one, expected 2, but got %d", v[1])
 	}
 }
 
 func TestCreatingVectorsByConversion(t *testing.T) {
-	array := []float64{1, 2}
+	array := []*big.Float{big.NewFloat(1), big.NewFloat(2)}
 	v := Vector(array)
-	if v[0] != 1 {
+	if v[0].Cmp(big.NewFloat(1)) != 0 {
 		t.Errorf("For index zero, expected 1, but got %d", v[0])
 	}
-	if v[1] != 2 {
+	if v[1].Cmp(big.NewFloat(2)) != 0 {
 		t.Errorf("For index one, expected 2, but got %d", v[1])
 	}
 }
@@ -120,6 +121,12 @@ func TestVectorEquality(t *testing.T) {
 			b:        NewVector(1, 2, 3, 4, 4),
 			expected: false,
 		},
+		{
+			name:     "Floating points",
+			a:        NewVector(0.8, 0.6),
+			b:        NewVector(0.8, 0.6),
+			expected: true,
+		},
 	}
 
 	for _, test := range tests {
@@ -127,88 +134,6 @@ func TestVectorEquality(t *testing.T) {
 
 		if actual != test.expected {
 			t.Errorf("%s: For %v and %v, expected '%v', but got '%v'", test.name, test.a, test.b, test.expected, actual)
-		}
-	}
-}
-
-func TestVectorEqualityWithinTolerance(t *testing.T) {
-	tests := []struct {
-		name      string
-		a         Vector
-		b         Vector
-		tolerance float64
-		expected  bool
-	}{
-		{
-			name:      "Different dimensions (1:2)",
-			a:         NewVector(1),
-			b:         NewVector(1, 1),
-			tolerance: float64(0),
-			expected:  false,
-		},
-		{
-			name:      "Different dimensions (2:1)",
-			a:         NewVector(1, 1),
-			b:         NewVector(1),
-			tolerance: float64(0),
-			expected:  false,
-		},
-		{
-			name:      "Single dimension, different values",
-			a:         NewVector(1),
-			b:         NewVector(2),
-			tolerance: float64(0),
-			expected:  false,
-		},
-		{
-			name:      "Single dimension, same values",
-			a:         NewVector(1),
-			b:         NewVector(1),
-			tolerance: float64(0),
-			expected:  true,
-		},
-		{
-			name:      "Multiple dimensions, same values",
-			a:         NewVector(1, 2, 3, 4, 5),
-			b:         NewVector(1, 2, 3, 4, 5),
-			tolerance: float64(0),
-			expected:  true,
-		},
-		{
-			name:      "Multiple dimensions, different values",
-			a:         NewVector(1, 2, 3, 4, 5),
-			b:         NewVector(1, 2, 3, 4, 4),
-			tolerance: float64(0),
-			expected:  false,
-		},
-		{
-			name:      "One decimal place",
-			a:         NewVector(1, 1),
-			b:         NewVector(1.1, 1.1),
-			tolerance: tolerance.OneDecimalPlace,
-			expected:  true,
-		},
-		{
-			name:      "Two decimal places",
-			a:         NewVector(1, 1),
-			b:         NewVector(1.1, 1.1),
-			tolerance: tolerance.TwoDecimalPlaces,
-			expected:  false,
-		},
-		{
-			name:      "Three decimal places",
-			a:         NewVector(1, 1),
-			b:         NewVector(1.001, 1.001),
-			tolerance: tolerance.ThreeDecimalPlaces,
-			expected:  true,
-		},
-	}
-
-	for _, test := range tests {
-		actual := test.a.EqWithinTolerance(test.b, test.tolerance)
-
-		if actual != test.expected {
-			t.Errorf("%s: %v and %v within tolerance %f, expected '%v', but got '%v'", test.name, test.a, test.b, test.tolerance, test.expected, actual)
 		}
 	}
 }
@@ -430,10 +355,10 @@ func TestVectorScalarMultiplication(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		actual := test.a.Scale(test.scalar)
+		actual := test.a.Scale(big.NewFloat(test.scalar))
 
 		if !actual.Eq(test.expected) {
-			t.Errorf("%s: For %v * %f, expected '%v', but got '%v'", test.name, test.a, test.scalar, test.expected, actual)
+			t.Errorf("%s: For %v * %v, expected '%v', but got '%v'", test.name, test.a, test.scalar, test.expected, actual)
 		}
 	}
 }
@@ -442,40 +367,40 @@ func TestVectorMagnitudeCalculation(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    Vector
-		expected float64
+		expected *big.Float
 	}{
 		{
 			name:     "Pythagoran triangle",
 			input:    NewVector(4, 3),
-			expected: 5,
+			expected: newFloat().SetInt64(5),
 		},
 		{
 			name:     "Ones",
 			input:    NewVector(1, 1, 1),
-			expected: math.Sqrt(1 + 1 + 1),
+			expected: bigfloat.Sqrt(newFloat().SetInt64(3)), // sqrt((1*1) + (1*1) + (1*1))
 		},
 		{
 			name:     "Zeroes",
 			input:    NewVector(0, 0, 0, 0),
-			expected: 0,
+			expected: floatZero,
 		},
 		{
 			name:     "Negative numbers",
 			input:    NewVector(-4, 3),
-			expected: 5,
+			expected: newFloat().SetInt64(5), // (-4*-4) + (9)
 		},
 		{
 			name:     "Negative one",
 			input:    NewVector(-1, 1, 1),
-			expected: math.Sqrt(3),
+			expected: bigfloat.Sqrt(newFloat().SetInt64(3)),
 		},
 	}
 
 	for _, test := range tests {
 		actual := test.input.Magnitude()
 
-		if actual != test.expected {
-			t.Errorf("%s: For the magnitude of %v, expected '%f', but got '%f'", test.name, test.input, test.expected, actual)
+		if actual.Cmp(test.expected) != 0 {
+			t.Errorf("%s: For the magnitude of %v, expected '(%v)', but got '%v'", test.name, test.input, test.expected, actual)
 		}
 	}
 }
@@ -533,28 +458,18 @@ func TestVectorNormalization(t *testing.T) {
 			input:    NewVector(0, 0),
 			expected: NewVector(0, 0),
 		},
-		{
-			name:     "Udacity example 1",
-			input:    NewVector(5.581, -2.136),
-			expected: NewVector(0.934, -0.357),
-		},
-		{
-			name:     "Udacity example 2",
-			input:    NewVector(1.996, 3.108, -4.554),
-			expected: NewVector(0.340, 0.530, -0.777),
-		},
 	}
 
 	for _, test := range tests {
 		actual := test.input.Normalize()
 
-		if !actual.EqWithinTolerance(test.expected, tolerance.ThreeDecimalPlaces) {
+		if !actual.EqTest(test.name, test.expected) {
 			t.Errorf("%s: For the direction of %v, expected %v, but got %v", test.name, test.input, test.expected, actual)
 		}
 
 		if !actual.IsZeroVector() {
-			if !tolerance.IsWithin(actual.Magnitude(), 1, tolerance.ThreeDecimalPlaces) {
-				t.Errorf("%s: The magnitude for a unit vector should always be one, but got %f", test.name, actual.Magnitude())
+			if actual.Magnitude().Cmp(floatOne) != 0 {
+				t.Errorf("%s: The magnitude for a unit vector should always be one, but got %v", test.name, actual.Magnitude())
 			}
 		}
 	}
@@ -604,7 +519,7 @@ func TestDotProduct(t *testing.T) {
 	for _, test := range tests {
 		actual, err := test.a.DotProduct(test.b)
 
-		if actual != test.expected {
+		if actual.Cmp(big.NewFloat(test.expected)) != 0 {
 			t.Errorf("%s: For the dot product of %v and %v, expected '%v', but got '%v'", test.name, test.a, test.b, test.expected, actual)
 		}
 
@@ -710,8 +625,14 @@ func TestIsParallelToFunction(t *testing.T) {
 		},
 		{
 			name:     "Triple the size",
-			a:        NewVector(2, 3, 1),
-			b:        NewVector(6, 9, 3),
+			a:        NewVector(3, 3, 3),
+			b:        NewVector(9, 9, 9),
+			expected: true,
+		},
+		{
+			name:     "9 times bigger",
+			a:        NewVector(1, 2, 3),
+			b:        NewVector(9, 18, 27),
 			expected: true,
 		},
 		{
@@ -720,7 +641,6 @@ func TestIsParallelToFunction(t *testing.T) {
 			b:        NewVector(2, 2),
 			expected: true,
 		},
-
 		{
 			name:                 "Different sizes",
 			a:                    NewVector(-2, -2, -1),

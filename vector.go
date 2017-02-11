@@ -3,17 +3,33 @@ package linear
 import (
 	"bytes"
 	"fmt"
-	"math"
+	"math/big"
 
-	tolerancepkg "github.com/a-h/linear/tolerance"
+	"github.com/a-h/linear/bigfloat"
 )
 
 // Vector represents an array of values.
-type Vector []float64
+type Vector []*big.Float
+
+// Define a few constants to save allocations.
+var floatNegativeOne = newFloat().SetInt64(-1)
+var floatZero = newFloat().SetInt64(0)
+var floatOne = newFloat().SetInt64(1)
+
+const prec = 53
+
+func newFloat() *big.Float {
+	return new(big.Float).SetPrec(prec)
+}
 
 // NewVector creates a vector with the dimensions specified by the argument.
 func NewVector(values ...float64) Vector {
-	return Vector(values)
+	v := make([]*big.Float, len(values))
+	for i, val := range values {
+		v[i] = big.NewFloat(val)
+		v[i].SetPrec(prec)
+	}
+	return Vector(v)
 }
 
 func (v1 Vector) String() string {
@@ -38,20 +54,21 @@ func (v1 Vector) Eq(v2 Vector) bool {
 		return false
 	}
 	for i := 0; i < len(v2); i++ {
-		if v1[i] != v2[i] {
+		if v1[i].Cmp(v2[i]) != 0 {
 			return false
 		}
 	}
 	return true
 }
 
-// EqWithinTolerance tests that a vector is equal, within a given tolerance.
-func (v1 Vector) EqWithinTolerance(v2 Vector, tolerance float64) bool {
+func (v1 Vector) EqTest(n string, v2 Vector) bool {
 	if len(v1) != len(v2) {
+		fmt.Printf("%s: length not equal\n", n)
 		return false
 	}
 	for i := 0; i < len(v2); i++ {
-		if !tolerancepkg.IsWithin(v1[i], v2[i], tolerance) {
+		if v1[i].Cmp(v2[i]) != 0 {
+			fmt.Printf("%s: value index %d not equal %v and %v\n", n, i, v1[i], v2[i])
 			return false
 		}
 	}
@@ -63,9 +80,9 @@ func (v1 Vector) Add(v2 Vector) (Vector, error) {
 	if len(v1) != len(v2) {
 		return Vector{}, fmt.Errorf("cannot add vectors together because they have different dimensions (%d and %d)", len(v1), len(v2))
 	}
-	op := make([]float64, len(v1))
+	op := make([]*big.Float, len(v1))
 	for i := 0; i < len(v1); i++ {
-		op[i] = v1[i] + v2[i]
+		op[i] = newFloat().Add(v1[i], v2[i])
 	}
 	return Vector(op), nil
 }
@@ -75,9 +92,9 @@ func (v1 Vector) Sub(v2 Vector) (Vector, error) {
 	if len(v1) != len(v2) {
 		return Vector{}, fmt.Errorf("cannot subtract vectors because they have different dimensions (%d and %d)", len(v1), len(v2))
 	}
-	op := make([]float64, len(v1))
+	op := make([]*big.Float, len(v1))
 	for i := 0; i < len(v1); i++ {
-		op[i] = v1[i] - v2[i]
+		op[i] = newFloat().Sub(v1[i], v2[i])
 	}
 	return Vector(op), nil
 }
@@ -87,45 +104,50 @@ func (v1 Vector) Mul(v2 Vector) (Vector, error) {
 	if len(v1) != len(v2) {
 		return Vector{}, fmt.Errorf("cannot multiply vectors because they have different dimensions (%d and %d)", len(v1), len(v2))
 	}
-	op := make([]float64, len(v1))
+	op := make([]*big.Float, len(v1))
 	for i := 0; i < len(v1); i++ {
-		op[i] = v1[i] * v2[i]
+		op[i] = newFloat().Mul(v1[i], v2[i])
 	}
 	return Vector(op), nil
 }
 
 // Scale muliplies the current vector by the scalar input and returns a new vector.
-func (v1 Vector) Scale(scalar float64) Vector {
-	op := make([]float64, len(v1))
+func (v1 Vector) Scale(scalar *big.Float) Vector {
+	op := make([]*big.Float, len(v1))
 	for i := 0; i < len(v1); i++ {
-		op[i] = v1[i] * scalar
+		op[i] = newFloat().Mul(v1[i], scalar)
 	}
 	return Vector(op)
 }
 
 // Magnitude calculates the magnitude of the vector by calculating the square root of
 // the sum of each element squared.
-func (v1 Vector) Magnitude() float64 {
-	var sumOfSquares float64
+func (v1 Vector) Magnitude() *big.Float {
+	sumOfSquares := newFloat()
 	for _, v := range v1 {
-		sumOfSquares += (v * v)
+		squared := newFloat().Mul(v, v)
+		sumOfSquares.Add(sumOfSquares, squared)
 	}
-	return math.Sqrt(sumOfSquares)
+
+	return bigfloat.Sqrt(sumOfSquares)
 }
 
 // Normalize normalizes the magnitude of a vector to 1 and returns a new vector.
 func (v1 Vector) Normalize() Vector {
 	mag := v1.Magnitude()
-	if mag == 0 {
-		return Vector(make([]float64, len(v1))) // Return a vector of zeroes if the magnitude is zero.
+	if mag.Cmp(floatZero) == 0 {
+		zeroes := make([]float64, len(v1))
+		return NewVector(zeroes...) // Return a vector of zeroes if the magnitude is zero.
 	}
-	return v1.Scale(float64(1.0) / mag)
+	// one / mag
+	scalar := newFloat().Quo(floatOne, mag)
+	return v1.Scale(scalar)
 }
 
 // IsZeroVector returns true if all of the values in the vector are zero.
 func (v1 Vector) IsZeroVector() bool {
 	for _, v := range v1 {
-		if v != 0 {
+		if v.Cmp(floatZero) != 0 {
 			return false
 		}
 	}
@@ -134,13 +156,13 @@ func (v1 Vector) IsZeroVector() bool {
 
 // DotProduct calculates the dot product of the current vector and the input vector, or an error if the dimensions
 // of the vectors do not match.
-func (v1 Vector) DotProduct(v2 Vector) (float64, error) {
-	var rv float64
+func (v1 Vector) DotProduct(v2 Vector) (*big.Float, error) {
+	rv := newFloat()
 	if len(v1) != len(v2) {
 		return rv, fmt.Errorf("cannot calculate the dot product of the vectors because they have different dimensions (%d and %d)", len(v1), len(v2))
 	}
 	for i := 0; i < len(v1); i++ {
-		rv += v1[i] * v2[i]
+		rv.Add(rv, newFloat().Mul(v1[i], v2[i]))
 	}
 	return rv, nil
 }
@@ -152,7 +174,12 @@ func (v1 Vector) AngleBetween(v2 Vector) (Radian, error) {
 	if err != nil {
 		return 0, err
 	}
-	return Radian(math.Acos(dp / (v1.Magnitude() * v2.Magnitude()))), nil
+
+	magTimesMag := newFloat().Mul(v1.Magnitude(), v2.Magnitude())
+	angle := newFloat().Quo(dp, magTimesMag)
+
+	r, _ := bigfloat.Acos(angle).Float64()
+	return Radian(r), nil
 }
 
 // IsParallelTo calculates whether the current vector is parallel to the input vector by normalizing both
@@ -161,12 +188,14 @@ func (v1 Vector) IsParallelTo(v2 Vector) (bool, error) {
 	if len(v1) != len(v2) {
 		return false, fmt.Errorf("cannot calculate whether the vectors are parallel because they have different dimensions (%d and %d)", len(v1), len(v2))
 	}
-
+	if v1.IsZeroVector() || v2.IsZeroVector() {
+		return true, nil
+	}
 	u1 := v1.Normalize()
 	u2 := v2.Normalize()
 
 	parallelAndSameDirection := u1.Eq(u2)
-	parallelAndOppositeDirection := func() bool { return u1.Eq(u2.Scale(-1)) }
+	parallelAndOppositeDirection := func() bool { return u1.Eq(u2.Scale(floatNegativeOne)) }
 
 	return parallelAndSameDirection || parallelAndOppositeDirection(), nil
 }
@@ -178,5 +207,5 @@ func (v1 Vector) IsOrthogonalTo(v2 Vector) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("error calculating whether the vectors are orthogonol: %v", err)
 	}
-	return f == 0, nil
+	return f.Cmp(floatZero) == 0, nil
 }

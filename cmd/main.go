@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
-import "github.com/a-h/linear"
+import (
+	"fmt"
+	"math/big"
+
+	"github.com/a-h/linear"
+)
 import "flag"
 
 var quiz = flag.Int("quiz", 0, "The quiz to return the answers for.")
@@ -18,6 +22,8 @@ func main() {
 		quiz2()
 	case 3:
 		quiz3()
+	case 4:
+		quiz4()
 	default:
 		fmt.Println("Quiz not found.")
 	}
@@ -36,7 +42,7 @@ func quiz1() {
 		return
 	}
 	fmt.Println(q2)
-	q3 := linear.NewVector(1.671, -1.012, -0.318).Scale(7.41)
+	q3 := linear.NewVector(1.671, -1.012, -0.318).Scale(big.NewFloat(7.41))
 	fmt.Println(q3)
 }
 
@@ -76,4 +82,44 @@ func quiz3() {
 		return
 	}
 	fmt.Println(q4.Degrees())
+}
+
+func quiz4() {
+	questions := []struct {
+		v linear.Vector
+		w linear.Vector
+	}{
+		{
+			v: linear.NewVector(-7.579, -7.88),
+			w: linear.NewVector(22.737, 23.64),
+		},
+		{
+			v: linear.NewVector(-2.029, 9.97, 4.172),
+			w: linear.NewVector(-9.231, -6.639, -7.245),
+		},
+		{
+			v: linear.NewVector(-2.328, -7.284, -1.214),
+			w: linear.NewVector(-1.821, 1.072, -2.94),
+		},
+		{
+			v: linear.NewVector(2.118, 4.827),
+			w: linear.NewVector(0, 0),
+		},
+	}
+
+	for i, q := range questions {
+		isParallel, err := q.v.IsParallelTo(q.w)
+		if err != nil {
+			fmt.Printf("Failed to answer question %d (is parallel) with err %v", i, err)
+			return
+		}
+
+		isOrthogonol, err := q.v.IsOrthogonalTo(q.w)
+		if err != nil {
+			fmt.Printf("Failed to answer question %d (is orthogonol) with err %v", i, err)
+			return
+		}
+
+		fmt.Printf("%d: parallel: %v, orthogonol: %v\n", i, isParallel, isOrthogonol)
+	}
 }
