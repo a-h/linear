@@ -4,6 +4,8 @@ import (
 	"math"
 	"testing"
 
+	"strings"
+
 	"github.com/a-h/linear/tolerance"
 )
 
@@ -828,6 +830,56 @@ func TestIsOrthogonalToFunction(t *testing.T) {
 
 			if test.expectedErrorMessage != err.Error() {
 				t.Errorf("%s: For %v and %v, expected error message '%v', but got '%v'", test.name, test.a, test.b, test.expectedErrorMessage, err)
+			}
+		}
+	}
+}
+
+func TestProjectionFunction(t *testing.T) {
+	tests := []struct {
+		name                 string
+		basis                Vector
+		p                    Vector
+		expected             Vector
+		expectedErrorMessage string
+	}{
+		{
+			name:     "Pythagoran triangle",
+			basis:    NewVector(10, 0), // 10 across, but no height, just a straight line
+			p:        NewVector(4, 3),  // 4 along and 3 up, forming the hypotenuse of the triangle.
+			expected: NewVector(4, 0),  // 4 along and 0 up
+		},
+		// Example from https://www.khanacademy.org/math/linear-algebra/matrix-transformations/lin-trans-examples/v/introduction-to-projections
+		{
+			name:     "Khan Academy #1",
+			basis:    NewVector(2, 1),
+			p:        NewVector(2, 3),
+			expected: NewVector(2.8, 1.4),
+		},
+		{
+			name:                 "Different sizes",
+			basis:                NewVector(-2, -2, -1),
+			p:                    NewVector(2, 2),
+			expected:             Vector{},
+			expectedErrorMessage: "error projecting [2, 2] onto [-2, -2, -1] with error: cannot calculate the dot product of the vectors because they have different dimensions (2 and 3)",
+		},
+	}
+
+	for _, test := range tests {
+		actual, err := test.basis.Project(test.p)
+
+		if !actual.Eq(test.expected) {
+			t.Errorf("%s: Projecting %v onto basis %v - expected %v, but got %v", test.name, test.p, test.basis, test.expected, actual)
+		}
+
+		if err != nil {
+			if test.expectedErrorMessage == "" {
+				t.Errorf("%s: Projecting %v onto basis %v, no error was expected, but got '%v'", test.name, test.p, test.basis, err)
+				continue
+			}
+
+			if !strings.HasSuffix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("%s: Projecting %v onto %v, expected error message to start with '%v', but got '%v'", test.name, test.p, test.basis, test.expectedErrorMessage, err)
 			}
 		}
 	}

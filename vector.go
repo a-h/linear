@@ -186,3 +186,13 @@ func (v1 Vector) IsOrthogonalTo(v2 Vector) (bool, error) {
 	}
 	return tolerancepkg.IsWithin(f, 0, DefaultTolerance), nil
 }
+
+// Project projects the v2 vector onto the basis vector (v1) by calculating the unit vector of v1 and scaling it.
+func (v1 Vector) Project(v2 Vector) (Vector, error) {
+	unitVectorOfBasis := v1.Normalize()
+	dotProduct, err := v2.DotProduct(unitVectorOfBasis)
+	if err != nil {
+		return Vector{}, fmt.Errorf("error projecting %v onto %v with error: %v", v2, v1, err)
+	}
+	return unitVectorOfBasis.Scale(dotProduct), nil
+}
