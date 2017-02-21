@@ -20,6 +20,8 @@ func main() {
 		quiz3()
 	case 4:
 		quiz4()
+	case 5:
+		quiz5()
 	default:
 		fmt.Println("Quiz not found.")
 	}
@@ -110,12 +112,48 @@ func quiz4() {
 			return
 		}
 
-		isOrthogonol, err := q.v.IsOrthogonalTo(q.w)
+		isOrthogonal, err := q.v.IsOrthogonalTo(q.w)
 		if err != nil {
-			fmt.Printf("Failed to answer question %d (is orthogonol) with err %v", i, err)
+			fmt.Printf("Failed to answer question %d (is orthogonal) with err %v", i, err)
 			return
 		}
 
-		fmt.Printf("%d: parallel: %v, orthogonol: %v\n", i, isParallel, isOrthogonol)
+		fmt.Printf("%d: parallel: %v, orthogonal: %v\n", i, isParallel, isOrthogonal)
+	}
+}
+
+func quiz5() { // Coding vector projections
+	questions := []struct {
+		v linear.Vector
+		b linear.Vector // the basis vector
+	}{
+		{
+			v: linear.NewVector(3.039, 1.879),
+			b: linear.NewVector(0.825, 2.036),
+		},
+		{
+			v: linear.NewVector(-9.88, -3.264, -8.159),
+			b: linear.NewVector(-2.155, -9.353, -9.473),
+		},
+		{
+			v: linear.NewVector(3.009, -6.172, 3.692, -2.51),
+			b: linear.NewVector(6.404, -9.144, 2.759, 8.718),
+		},
+	}
+
+	for i, q := range questions {
+		projection, err := q.b.Projection(q.v)
+		if err != nil {
+			fmt.Printf("Failed to calculate the projection for question %d with err %v", i, err)
+			return
+		}
+
+		orhogonal, err := q.b.ProjectionOrthogonalComponent(q.v)
+		if err != nil {
+			fmt.Printf("Failed to calculate the orthogonal for question %d with err %v", i, err)
+			return
+		}
+
+		fmt.Printf("%d: projection: %v, orthogonal: %v\n", i, projection.Round(3), orhogonal.Round(3))
 	}
 }

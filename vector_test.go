@@ -811,7 +811,7 @@ func TestIsOrthogonalToFunction(t *testing.T) {
 			a:                    NewVector(-2, -2, -1),
 			b:                    NewVector(2, 2),
 			expected:             false,
-			expectedErrorMessage: "error calculating whether the vectors are orthogonol: cannot calculate the dot product of the vectors because they have different dimensions (3 and 2)",
+			expectedErrorMessage: "error calculating whether the vectors are orthogonal: cannot calculate the dot product of the vectors because they have different dimensions (3 and 2)",
 		},
 	}
 
@@ -846,8 +846,8 @@ func TestProjectionFunction(t *testing.T) {
 		{
 			name:     "Pythagoran triangle",
 			basis:    NewVector(10, 0), // 10 across, but no height, just a straight line
-			p:        NewVector(4, 3),  // 4 along and 3 up, forming the hypotenuse of the triangle.
-			expected: NewVector(4, 0),  // 4 along and 0 up
+			p:        NewVector(4, 3),  // 4 along and 3 up, forming the hypotenuse of the triangle (5 long).
+			expected: NewVector(4, 0),  // 4 along and 0 up, the base of the triangle, with the 3 height made up by the orthogonal vector.
 		},
 		// Example from https://www.khanacademy.org/math/linear-algebra/matrix-transformations/lin-trans-examples/v/introduction-to-projections
 		{
@@ -866,7 +866,7 @@ func TestProjectionFunction(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		actual, err := test.basis.Project(test.p)
+		actual, err := test.basis.Projection(test.p)
 
 		if !actual.Eq(test.expected) {
 			t.Errorf("%s: Projecting %v onto basis %v - expected %v, but got %v", test.name, test.p, test.basis, test.expected, actual)
@@ -881,6 +881,92 @@ func TestProjectionFunction(t *testing.T) {
 			if !strings.HasSuffix(err.Error(), test.expectedErrorMessage) {
 				t.Errorf("%s: Projecting %v onto %v, expected error message to start with '%v', but got '%v'", test.name, test.p, test.basis, test.expectedErrorMessage, err)
 			}
+		}
+	}
+}
+
+func TestProjectOrthogonalFunction(t *testing.T) {
+	tests := []struct {
+		name                 string
+		basis                Vector
+		p                    Vector
+		expected             Vector
+		expectedErrorMessage string
+	}{
+		{
+			name:     "Pythagoran triangle", // a 5,4,3 triangle
+			basis:    NewVector(10, 0),      // 10 across, but no height, just a straight line
+			p:        NewVector(4, 3),       // 4 along and 3 up, forming the hypotenuse of the triangle.
+			expected: NewVector(0, 3),       // The Project function would give (4, 0)
+		},
+		{
+			name:     "Bigger triangle", // a 5, 12, 13 triangle
+			basis:    NewVector(10, 0),  // 2 * 5 as the basis vector. The unit vector is (1, 0).
+			p:        NewVector(5, 13),  // 5 across and 13 up.
+			expected: NewVector(0, 13),  // Rise 13 to meet the 5, 13 vector.
+		},
+		{
+			name:                 "Different sizes",
+			basis:                NewVector(-2, -2, -1),
+			p:                    NewVector(2, 2),
+			expected:             Vector{},
+			expectedErrorMessage: "error projecting [2, 2] onto [-2, -2, -1] with error: cannot calculate the dot product of the vectors because they have different dimensions (2 and 3)",
+		},
+	}
+
+	for _, test := range tests {
+		actual, err := test.basis.ProjectionOrthogonalComponent(test.p)
+
+		if !actual.Eq(test.expected) {
+			t.Errorf("%s: Projecting %v onto basis %v - expected %v, but got %v", test.name, test.p, test.basis, test.expected, actual)
+		}
+
+		if err != nil {
+			if test.expectedErrorMessage == "" {
+				t.Errorf("%s: Projecting %v onto basis %v, no error was expected, but got '%v'", test.name, test.p, test.basis, err)
+				continue
+			}
+
+			if !strings.HasSuffix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("%s: Projecting %v onto %v, expected error message to start with '%v', but got '%v'", test.name, test.p, test.basis, test.expectedErrorMessage, err)
+			}
+		}
+	}
+}
+
+func TestRoundingFunction(t *testing.T) {
+	tests := []struct {
+		input    Vector
+		decimals int
+		expected Vector
+	}{
+		{
+			input:    NewVector(1.1, 2.1),
+			decimals: 0,
+			expected: NewVector(1.0, 2.0),
+		},
+		{
+			input:    NewVector(1.12, 2.12),
+			decimals: 1,
+			expected: NewVector(1.1, 2.1),
+		},
+		{
+			input:    NewVector(1.55, 2.55),
+			decimals: 1,
+			expected: NewVector(1.6, 2.6),
+		},
+		{
+			input:    NewVector(2.4445, 2.9999),
+			decimals: 3,
+			expected: NewVector(2.444, 3.0),
+		},
+	}
+
+	for _, test := range tests {
+		actual := test.input.Round(test.decimals)
+
+		if !actual.Eq(test.expected) {
+			t.Errorf("Rounding %v to %d decimal places - expected %v, but got %v", test.input, test.decimals, test.expected, actual)
 		}
 	}
 }

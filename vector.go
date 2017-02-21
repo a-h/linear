@@ -6,6 +6,7 @@ import (
 	"math"
 
 	tolerancepkg "github.com/a-h/linear/tolerance"
+	"github.com/a-h/round"
 )
 
 // Vector represents an array of values.
@@ -177,22 +178,41 @@ func (v1 Vector) IsParallelTo(v2 Vector) (bool, error) {
 	return parallelAndSameDirection || parallelAndOppositeDirection(), nil
 }
 
-// IsOrthogonalTo calculates whether the current vector is orthogonol to the input vector by calculating
-// the dot product. If the dot product is zero, then the vectors are orthogonol.
+// IsOrthogonalTo calculates whether the current vector is orthogonal to the input vector by calculating
+// the dot product. If the dot product is zero, then the vectors are orthogonal.
 func (v1 Vector) IsOrthogonalTo(v2 Vector) (bool, error) {
 	f, err := v1.DotProduct(v2)
 	if err != nil {
-		return false, fmt.Errorf("error calculating whether the vectors are orthogonol: %v", err)
+		return false, fmt.Errorf("error calculating whether the vectors are orthogonal: %v", err)
 	}
 	return tolerancepkg.IsWithin(f, 0, DefaultTolerance), nil
 }
 
-// Project projects the v2 vector onto the basis vector (v1) by calculating the unit vector of v1 and scaling it.
-func (v1 Vector) Project(v2 Vector) (Vector, error) {
+// Projection calculates the projection of the v2 vector onto the basis vector (v1) by calculating the unit vector of v1 and scaling it.
+func (v1 Vector) Projection(v2 Vector) (Vector, error) {
 	unitVectorOfBasis := v1.Normalize()
 	dotProduct, err := v2.DotProduct(unitVectorOfBasis)
 	if err != nil {
 		return Vector{}, fmt.Errorf("error projecting %v onto %v with error: %v", v2, v1, err)
 	}
 	return unitVectorOfBasis.Scale(dotProduct), nil
+}
+
+// ProjectionOrthogonalComponent calculates the projection of v2 onto the basis vector (v1) and uses that to calculate a component
+// which is orthogonal to the basis vector and perpendicular to v2.
+func (v1 Vector) ProjectionOrthogonalComponent(v2 Vector) (Vector, error) {
+	projection, err := v1.Projection(v2)
+	if err != nil {
+		return Vector{}, err
+	}
+	return v2.Sub(projection)
+}
+
+// Round rounds the vector to the specified number of places.
+func (v1 Vector) Round(decimals int) Vector {
+	op := make([]float64, len(v1))
+	for i := 0; i < len(v1); i++ {
+		op[i] = round.ToEven(v1[i], decimals)
+	}
+	return Vector(op)
 }
