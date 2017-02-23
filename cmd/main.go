@@ -3,6 +3,7 @@ package main
 import "fmt"
 import "github.com/a-h/linear"
 import "flag"
+import "github.com/a-h/round"
 
 var quiz = flag.Int("quiz", 0, "The quiz to return the answers for.")
 
@@ -22,6 +23,8 @@ func main() {
 		quiz4()
 	case 5:
 		quiz5()
+	case 6:
+		quiz6()
 	default:
 		fmt.Println("Quiz not found.")
 	}
@@ -156,4 +159,27 @@ func quiz5() { // Coding vector projections
 
 		fmt.Printf("%d: projection: %v, orthogonal: %v\n", i, projection.Round(3), orhogonal.Round(3))
 	}
+}
+
+func quiz6() { // Coding cross products
+	a, err := linear.NewVector(8.462, 7.893, -8.187).CrossProduct(linear.NewVector(6.984, -5.975, 4.778))
+	if err != nil {
+		fmt.Printf("Failed to calculate the cross product for question a with err %v", err)
+		return
+	}
+	fmt.Println("a: ", a.Round(3))
+
+	b, err := linear.NewVector(-8.987, -9.838, 5.031).AreaOfParallelogram(linear.NewVector(-4.268, -1.861, -8.866))
+	if err != nil {
+		fmt.Printf("Failed to calculate the cross product for question b with err %v", err)
+		return
+	}
+	fmt.Println("b: ", round.ToEven(b, 3))
+
+	c, err := linear.NewVector(1.5, 9.547, 3.691).AreaOfTriangle(linear.NewVector(-6.007, 0.124, 5.772))
+	if err != nil {
+		fmt.Printf("Failed to calculate the cross product for question c with err %v", err)
+		return
+	}
+	fmt.Println("c: ", round.ToEven(c, 3))
 }

@@ -216,3 +216,64 @@ func (v1 Vector) Round(decimals int) Vector {
 	}
 	return Vector(op)
 }
+
+// CrossProduct calculates the cross product of the current vector and the input vector. The cross product
+// produces a vector which is:
+//  - orthogonal to both v1 and v2.
+//  - has a magnitude of the magnitude of v1 * the magnitude of v2 * the sine of the angle between v1 and v2
+// v2 must be a vector with 3 dimensions.
+func (v1 Vector) CrossProduct(v2 Vector) (Vector, error) {
+	if len(v1) != 3 {
+		return Vector{}, fmt.Errorf("the basis vector has %d dimensions but must have 3 because cross products do not generalize to multiple dimensions", len(v1))
+	}
+
+	if len(v2) != 3 {
+		return Vector{}, fmt.Errorf("the input vector has %d dimensions but must have 3 because cross products do not generalize to multiple dimensions", len(v2))
+	}
+
+	var a1, a2, a3 = v1[0], v1[1], v1[2]
+	var b1, b2, b3 = v2[0], v2[1], v2[2]
+
+	c1 := (a2 * b3) - (a3 * b2)
+	c2 := (a3 * b1) - (a1 * b3)
+	if c2 == -0 {
+		c2 = 0
+	}
+	c3 := (a1 * b2) - (a2 * b1)
+
+	return NewVector(c1, c2, c3), nil
+}
+
+// AreaOfParallelogram calculates the area of a parallelogram spanned by the basis vector and input vector for 2D and 3D inputs.
+func (v1 Vector) AreaOfParallelogram(v2 Vector) (float64, error) {
+	// Add a z dimension initialised to zero for 2D inputs.
+	if len(v1) == 2 {
+		v1 = NewVector(v1[0], v1[0], 0)
+	}
+	if len(v2) == 2 {
+		v2 = NewVector(v2[0], v2[1], 0)
+	}
+
+	cp, err := v1.CrossProduct(v2)
+	if err != nil {
+		return 0.0, err
+	}
+	return cp.Magnitude(), nil
+}
+
+// AreaOfTriangle calculates the area of a parallelogram spanned by the basis vector and input vector for 2D and 3D inputs.
+func (v1 Vector) AreaOfTriangle(v2 Vector) (float64, error) {
+	// Add a z dimension initialised to zero for 2D inputs.
+	if len(v1) == 2 {
+		v1 = NewVector(v1[0], v1[0], 0)
+	}
+	if len(v2) == 2 {
+		v2 = NewVector(v2[0], v2[1], 0)
+	}
+
+	p, err := v1.AreaOfParallelogram(v2)
+	if err != nil {
+		return p, err
+	}
+	return p * 0.5, nil
+}

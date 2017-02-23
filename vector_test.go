@@ -970,3 +970,231 @@ func TestRoundingFunction(t *testing.T) {
 		}
 	}
 }
+
+func TestCrossProductFunction(t *testing.T) {
+	tests := []struct {
+		name                 string
+		v                    Vector
+		w                    Vector
+		expected             Vector
+		expectedErrorMessage string
+	}{
+		{
+			name:                 "4 dimension basis",
+			v:                    NewVector(3, 3, 3, 3),
+			w:                    NewVector(1, 2, 3),
+			expected:             Vector{}, // Default value
+			expectedErrorMessage: "the basis vector has 4 dimensions but must have 3 because cross products do not generalize to multiple dimensions",
+		},
+		{
+			name:                 "1 dimension basis",
+			v:                    NewVector(3),
+			w:                    NewVector(1, 2, 3),
+			expected:             Vector{}, // Default value
+			expectedErrorMessage: "the basis vector has 1 dimensions but must have 3 because cross products do not generalize to multiple dimensions",
+		},
+		{
+			name:                 "4 dimension input",
+			v:                    NewVector(1, 2, 3),
+			w:                    NewVector(1, 2, 3, 4),
+			expected:             Vector{}, // Default value
+			expectedErrorMessage: "the input vector has 4 dimensions but must have 3 because cross products do not generalize to multiple dimensions",
+		},
+		{
+			name:                 "1 dimension input",
+			v:                    NewVector(1, 2, 3),
+			w:                    NewVector(1),
+			expected:             Vector{}, // Default value
+			expectedErrorMessage: "the input vector has 1 dimensions but must have 3 because cross products do not generalize to multiple dimensions",
+		},
+		{
+			name:     "the cross product of two parallel vectors is the zero vector (2D)",
+			v:        NewVector(3, 0, 0), // Line moving right 3 places.
+			w:        NewVector(3, 0, 0), // Line moving right 3 places.
+			expected: NewVector(0, 0, 0), // Zero vector
+		},
+		{
+			name:     "the cross product of vectors at 180 degrees is the zero vector (2D)",
+			v:        NewVector(3, 0, 0),  // Line moving right 3 places.
+			w:        NewVector(-3, 0, 0), // Line moving left 3 places.
+			expected: NewVector(0, 0, 0),  // Zero vector
+		},
+		{
+			name:     "if either vector is zero, the result is the zero vector (2D)",
+			v:        NewVector(3, 0, 0), // Line moving right 3 places.
+			w:        NewVector(0, 0, 0), // Zero vector.
+			expected: NewVector(0, 0, 0), // Zero vector
+		},
+		{
+			name:     "if either vector is zero, the result is the zero vector (3D)",
+			v:        NewVector(0, 0, 0), // Zero vector.
+			w:        NewVector(3, 3, 3), // Non-zero vector.
+			expected: NewVector(0, 0, 0), // Zero vector
+		},
+		{
+			name:     "vectors at right angles produce a z vector (3D)",
+			v:        NewVector(3, 0, 0), // 3 across.
+			w:        NewVector(0, 3, 0), // 3 up.
+			expected: NewVector(0, 0, 9), // z of 9.
+		},
+		{
+			name:     "vectors at right angles produce a z vector (3D) - opposite direction",
+			v:        NewVector(0, 3, 0),  // 3 up.
+			w:        NewVector(3, 0, 0),  // 3 across.
+			expected: NewVector(0, 0, -9), // z of -9.
+		},
+		{
+			name:     "Udacity example at https://classroom.udacity.com/courses/ud953/lessons/4374471116/concepts/45834932820923#",
+			v:        NewVector(5, 3, -2),
+			w:        NewVector(-1, 0, 3),
+			expected: NewVector(9, -13, 3),
+		},
+		{
+			name:     "Khan Academy example at https://www.khanacademy.org/math/linear-algebra/vectors-and-spaces/dot-cross-products/v/linear-algebra-cross-product-introduction",
+			v:        NewVector(1, -7, 1),
+			w:        NewVector(5, 2, 4),
+			expected: NewVector(-30, 1, 37),
+		},
+	}
+
+	for _, test := range tests {
+		actual, err := test.v.CrossProduct(test.w)
+
+		if !actual.Eq(test.expected) {
+			t.Errorf("%s: Calculating the cross product of %v and %v - expected %v, but got %v", test.name, test.v, test.w, test.expected, actual)
+		}
+
+		if err != nil {
+			if test.expectedErrorMessage == "" {
+				t.Errorf("%s: Calculating the cross product of %v and %v, no error was expected but got '%v'", test.name, test.v, test.w, err)
+				continue
+			}
+
+			if !strings.HasSuffix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("%s: Calculating the cross product of %v and %v - expected error message to start with %v, but got '%v'", test.name, test.v, test.w, test.expectedErrorMessage, err)
+			}
+		}
+
+		reverse, _ := test.w.CrossProduct(test.v)
+		scaledReverse := reverse.Scale(-1)
+		if !scaledReverse.Eq(actual) {
+			t.Errorf("%s: reverse: for v (%v) and w (%v) expected (v * w) = %v = -(w * v), but got %v", test.name, test.v, test.w, actual, scaledReverse)
+		}
+	}
+}
+
+func TestParallelogramAreaFunction(t *testing.T) {
+	tests := []struct {
+		name                 string
+		v                    Vector
+		w                    Vector
+		expected             float64
+		expectedErrorMessage string
+	}{
+		{
+			name:     "3 * 3",
+			v:        NewVector(3, 0, 0),
+			w:        NewVector(0, 3, 0),
+			expected: 9,
+		},
+		{
+			name:     "3 * 3 - in different orientation",
+			v:        NewVector(0, 0, 3),
+			w:        NewVector(0, 3, 0),
+			expected: 9,
+		},
+		{
+			name:     "Udacity example at https://classroom.udacity.com/courses/ud953/lessons/4374471116/concepts/45834932820923#",
+			v:        NewVector(5, 3, -2),
+			w:        NewVector(-1, 0, 3),
+			expected: math.Sqrt((9 * 9) + (-13 * -13) + (3 * 3)), // 9 squared + -13 squared + 3 squared
+		},
+		{
+			name:     "2D input",
+			v:        NewVector(3, 0),
+			w:        NewVector(0, 3),
+			expected: 9,
+		},
+		{
+			name:                 "4D input",
+			v:                    NewVector(1, 2, 3, 4),
+			w:                    NewVector(0, 3),
+			expected:             0.0,
+			expectedErrorMessage: "the basis vector has 4 dimensions but must have 3 because cross products do not generalize to multiple dimensions",
+		},
+	}
+
+	for _, test := range tests {
+		actual, err := test.v.AreaOfParallelogram(test.w)
+
+		if err != nil {
+			if test.expectedErrorMessage == "" {
+				t.Errorf("%s: Calculating parallelogram area of %v and %v, no error was expected but got '%v'", test.name, test.v, test.w, err)
+				continue
+			}
+
+			if !strings.HasSuffix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("%s: Calculating parallelogram area of %v and %v - expected error message to start with %v, but got '%v'", test.name, test.v, test.w, test.expectedErrorMessage, err)
+			}
+		}
+
+		if actual != test.expected {
+			t.Errorf("%s: Calculating parallelogram area of %v and %v - expected %v, but got %v", test.name, test.v, test.w, test.expected, actual)
+		}
+	}
+}
+
+func TestTriangleAreaFunction(t *testing.T) {
+	tests := []struct {
+		name                 string
+		v                    Vector
+		w                    Vector
+		expected             float64
+		expectedErrorMessage string
+	}{
+		{
+			name:     "3 * 3",
+			v:        NewVector(3, 0, 0),
+			w:        NewVector(0, 3, 0),
+			expected: 4.5,
+		},
+		{
+			name:     "Udacity example at https://classroom.udacity.com/courses/ud953/lessons/4374471116/concepts/45834932820923#",
+			v:        NewVector(5, 3, -2),
+			w:        NewVector(-1, 0, 3),
+			expected: math.Sqrt((9*9)+(-13*-13)+(3*3)) / 2, // 9 squared + -13 squared + 3 squared
+		},
+		{
+			name:     "2D input",
+			v:        NewVector(3, 0),
+			w:        NewVector(0, 3),
+			expected: 4.5,
+		},
+		{
+			name:                 "4D input",
+			v:                    NewVector(1, 2, 3, 4),
+			w:                    NewVector(0, 3),
+			expected:             0.0,
+			expectedErrorMessage: "the basis vector has 4 dimensions but must have 3 because cross products do not generalize to multiple dimensions",
+		},
+	}
+
+	for _, test := range tests {
+		actual, err := test.v.AreaOfTriangle(test.w)
+
+		if err != nil {
+			if test.expectedErrorMessage == "" {
+				t.Errorf("%s: Calculating triangle area of %v and %v, no error was expected but got '%v'", test.name, test.v, test.w, err)
+				continue
+			}
+
+			if !strings.HasSuffix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("%s: Calculating triangle area of %v and %v - expected error message to start with %v, but got '%v'", test.name, test.v, test.w, test.expectedErrorMessage, err)
+			}
+		}
+
+		if actual != test.expected {
+			t.Errorf("%s: Calculating triangle area of %v and %v - expected %v, but got %v", test.name, test.v, test.w, test.expected, actual)
+		}
+	}
+}
