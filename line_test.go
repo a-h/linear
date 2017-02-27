@@ -83,13 +83,29 @@ func TestParallelLineFunction(t *testing.T) {
 			b:        NewLine(NewVector(0, 0), 18),
 			expected: true,
 		},
+		{
+			name:     "Example from Udacity (1)", // https://classroom.udacity.com/courses/ud953/lessons/4624329808/concepts/49417987180923#
+			a:        NewLine(NewVector(3, -2), 1),
+			b:        NewLine(NewVector(-6, 4), 0),
+			expected: true,
+		},
+		{
+			name:     "Example from Udacity (2)", // https://classroom.udacity.com/courses/ud953/lessons/4624329808/concepts/49417987180923#
+			a:        NewLine(NewVector(0, 2), 3),
+			b:        NewLine(NewVector(1, 1), 2),
+			expected: false,
+		},
 	}
 
 	for _, test := range tests {
-		actual := test.a.IsParallelTo(test.b)
+		actual, err := test.a.IsParallelTo(test.b)
 
 		if actual != test.expected {
-			t.Errorf("%s: Expected '%v', but got '%v'", test.name, test.expected, actual)
+			t.Errorf("%s: Expected '%v' and '%v' parallel test to be '%v', but got '%v'", test.name, test.a, test.b, test.expected, actual)
+		}
+
+		if err != nil {
+			t.Errorf("%s: Got error '%v'.", test.name, err)
 		}
 	}
 }
