@@ -42,9 +42,9 @@ func firstNonZeroElement(v Vector) (index int) {
 	return 0
 }
 
-func (l Line) String() string {
+func (l1 Line) String() string {
 	buf := bytes.Buffer{}
-	for i, p := range l.NormalVector {
+	for i, p := range l1.NormalVector {
 		if i == 0 {
 			// The first element should have an integrated +/- sign.
 			if !tolerance.IsWithin(p, 0.0, DefaultTolerance) {
@@ -67,7 +67,7 @@ func (l Line) String() string {
 		buf.WriteString(fmt.Sprintf("x%s", getSubscript(i+1)))
 	}
 	// Write out the constant term.
-	buf.WriteString(fmt.Sprintf(" = %v", l.ConstantTerm))
+	buf.WriteString(fmt.Sprintf(" = %v", l1.ConstantTerm))
 	return buf.String()
 }
 
@@ -107,4 +107,8 @@ func getSubscript(i int) string {
 	}
 
 	return buf.String()
+}
+
+func (l1 Line) IsParallelTo(l2 Line) bool {
+	return l1.NormalVector.Normalize().Eq(l2.NormalVector.Normalize())
 }
