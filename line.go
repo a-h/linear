@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+	"strconv"
 
 	"github.com/a-h/linear/tolerance"
 )
@@ -51,7 +52,7 @@ func (l Line) String() string {
 				buf.WriteString(fmt.Sprintf("%v", p))
 			}
 			// Write out the x_1 specifier.
-			buf.WriteString(fmt.Sprintf("x_%d", i+1))
+			buf.WriteString(fmt.Sprintf("x%s", getSubscript(i+1)))
 			continue
 		}
 
@@ -63,7 +64,7 @@ func (l Line) String() string {
 			buf.WriteString(fmt.Sprintf("%v", math.Abs(p)))
 		}
 		// Write out the x_1 specifier.
-		buf.WriteString(fmt.Sprintf("x_%d", i+1))
+		buf.WriteString(fmt.Sprintf("x%s", getSubscript(i+1)))
 	}
 	// Write out the constant term.
 	buf.WriteString(fmt.Sprintf(" = %v", l.ConstantTerm))
@@ -75,4 +76,35 @@ func operator(v float64) string {
 		return " - "
 	}
 	return " + "
+}
+
+func getSubscript(i int) string {
+	buf := bytes.Buffer{}
+	str := strconv.Itoa(i)
+	for _, v := range str {
+		switch v {
+		case '0':
+			buf.WriteRune('₀')
+		case '1':
+			buf.WriteRune('₁')
+		case '2':
+			buf.WriteRune('₂')
+		case '3':
+			buf.WriteRune('₃')
+		case '4':
+			buf.WriteRune('₄')
+		case '5':
+			buf.WriteRune('₅')
+		case '6':
+			buf.WriteRune('₆')
+		case '7':
+			buf.WriteRune('₇')
+		case '8':
+			buf.WriteRune('₈')
+		case '9':
+			buf.WriteRune('₉')
+		}
+	}
+
+	return buf.String()
 }
