@@ -109,6 +109,7 @@ func getSubscript(i int) string {
 	return buf.String()
 }
 
+// IsParallelTo determines whether two lines are parallel to each other.
 func (l1 Line) IsParallelTo(l2 Line) bool {
 	return l1.NormalVector.Normalize().Eq(l2.NormalVector.Normalize())
 }
