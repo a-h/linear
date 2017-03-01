@@ -109,3 +109,61 @@ func TestParallelLineFunction(t *testing.T) {
 		}
 	}
 }
+
+func TestEqualFunction(t *testing.T) {
+	tests := []struct {
+		name     string
+		a        Line
+		b        Line
+		expected bool
+	}{
+		{
+			name:     "x + y = 1 and -3x -3y = -3",
+			a:        NewLine(NewVector(1, 1), 1),
+			b:        NewLine(NewVector(-3, -3), -3),
+			expected: true,
+		},
+		{
+			name:     "x + y = 1 and -3x -3y = -2",
+			a:        NewLine(NewVector(1, 1), 1),
+			b:        NewLine(NewVector(-3, -3), -2),
+			expected: false,
+		},
+		{
+			name:     "0x + 0x = 1 and 0x + 1y = -2", // One zero vector, and a non-zero vector.
+			a:        NewLine(NewVector(0, 0), 1),
+			b:        NewLine(NewVector(0, 1), -2),
+			expected: false,
+		},
+		{
+			name:     "0x + 0y = 1 and 0x + 0y = -2", // 2 zero vectors, with different constants
+			a:        NewLine(NewVector(0, 0), 1),
+			b:        NewLine(NewVector(0, 0), -2),
+			expected: false,
+		},
+		{
+			name:     "3x + 2y = 1 and 1x + 2y = -2", // 2 non-parallel vectors.
+			a:        NewLine(NewVector(3, 2), 1),
+			b:        NewLine(NewVector(1, 2), -2),
+			expected: false,
+		},
+		{
+			name:     "3x + 2y = 1 and 1x + 2y = -2", // Different size vectors.
+			a:        NewLine(NewVector(3, 2), 1),
+			b:        NewLine(NewVector(3, 2, 1), 1),
+			expected: false,
+		},
+	}
+
+	for _, test := range tests {
+		actual, err := test.a.Eq(test.b)
+
+		if actual != test.expected {
+			t.Errorf("%s: Expected '%v', but got '%v'", test.name, test.expected, actual)
+		}
+
+		if err != nil {
+			t.Errorf("%s: Unexpected error '%v'", test.name, err)
+		}
+	}
+}

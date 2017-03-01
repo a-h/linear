@@ -113,3 +113,30 @@ func getSubscript(i int) string {
 func (l1 Line) IsParallelTo(l2 Line) (bool, error) {
 	return l1.NormalVector.IsParallelTo(l2.NormalVector)
 }
+
+// Eq determines if two lines are equal.
+func (l1 Line) Eq(l2 Line) (bool, error) {
+	if l1.NormalVector.IsZeroVector() {
+		if !l2.NormalVector.IsZeroVector() {
+			return false, nil
+		}
+		// Check the constant term is zero.
+		diff := l1.ConstantTerm - l2.ConstantTerm
+		return tolerance.IsWithin(diff, 0.0, DefaultTolerance), nil
+	}
+
+	// If they're not parallel, there's no way they're going to be equal.
+	isParallel, err := l1.IsParallelTo(l2)
+	if !isParallel || err != nil {
+		return false, err
+	}
+
+	// Subtract a point on l2 from l1, which creates a vector between the two points.
+	// The vector that joins the lines should be orthogonal to the normal vector, or it's not equal.
+	// No need to capture the error here, because the error would be because the number of terms in the vector
+	// is different, which is already captured by the parallel check.
+	basepointDifference, _ := l1.Basepoint.Sub(l2.Basepoint)
+
+	// No need to check orthogonality of both vectors, because they're parallel to each other.
+	return basepointDifference.IsOrthogonalTo(l1.NormalVector)
+}

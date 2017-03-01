@@ -38,15 +38,7 @@ func (v1 Vector) String() string {
 
 // Eq compares an input vector against the current vector.
 func (v1 Vector) Eq(v2 Vector) bool {
-	if len(v1) != len(v2) {
-		return false
-	}
-	for i := 0; i < len(v2); i++ {
-		if v1[i] != v2[i] {
-			return false
-		}
-	}
-	return true
+	return v1.EqWithinTolerance(v2, DefaultTolerance)
 }
 
 // EqWithinTolerance tests that a vector is equal, within a given tolerance.
