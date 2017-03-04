@@ -1,6 +1,9 @@
 package linear
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestSubscript(t *testing.T) {
 	actual := getSubscript(9876543210)
@@ -112,10 +115,11 @@ func TestParallelLineFunction(t *testing.T) {
 
 func TestEqualFunction(t *testing.T) {
 	tests := []struct {
-		name     string
-		a        Line
-		b        Line
-		expected bool
+		name                 string
+		a                    Line
+		b                    Line
+		expected             bool
+		expectedErrorMessage string
 	}{
 		{
 			name:     "x + y = 1 and -3x -3y = -3",
@@ -136,6 +140,12 @@ func TestEqualFunction(t *testing.T) {
 			expected: false,
 		},
 		{
+			name:     "Input is zero, base is not.",
+			a:        NewLine(NewVector(1, 2), 1),
+			b:        NewLine(NewVector(0, 0), 1),
+			expected: false,
+		},
+		{
 			name:     "0x + 0y = 1 and 0x + 0y = -2", // 2 zero vectors, with different constants
 			a:        NewLine(NewVector(0, 0), 1),
 			b:        NewLine(NewVector(0, 0), -2),
@@ -148,10 +158,11 @@ func TestEqualFunction(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "3x + 2y = 1 and 1x + 2y = -2", // Different size vectors.
-			a:        NewLine(NewVector(3, 2), 1),
-			b:        NewLine(NewVector(3, 2, 1), 1),
-			expected: false,
+			name:                 "3x + 2y = 1 and 1x + 2y = -2", // Different size vectors.
+			a:                    NewLine(NewVector(3, 2), 1),
+			b:                    NewLine(NewVector(3, 2, 1), 1),
+			expected:             false,
+			expectedErrorMessage: "annot calculate whether the vectors are parallel because they have different dimensions (2 and 3)",
 		},
 	}
 
@@ -163,7 +174,164 @@ func TestEqualFunction(t *testing.T) {
 		}
 
 		if err != nil {
-			t.Errorf("%s: Unexpected error '%v'", test.name, err)
+			if test.expectedErrorMessage == "" {
+				t.Errorf("%s: Comparing '%v' and '%v', no error was expected but got '%v'", test.name, test.a, test.b, err)
+				continue
+			}
+
+			if !strings.HasSuffix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("%s: Comparing '%v' and '%v' - expected error message to start with %v, but got '%v'", test.name, test.a, test.b, test.expectedErrorMessage, err)
+			}
+		}
+	}
+}
+
+func TestIntersectionFunction(t *testing.T) {
+	tests := []struct {
+		name                 string
+		a                    Line
+		b                    Line
+		expected             Vector
+		intersects           bool
+		equal                bool
+		expectedErrorMessage string
+	}{
+		{
+			name:       "1x+3y=9 and 3x+3y=9",
+			a:          NewLine(NewVector(1, 3), 9),
+			b:          NewLine(NewVector(3, 3), 9),
+			expected:   NewVector(0, 3),
+			intersects: true,
+		},
+		{
+			name:       "1x+4y=9 and 3x+3y=9",       // 4y = -x + 9 and 3y = 9 - 3x
+			a:          NewLine(NewVector(1, 4), 9), // y = -1/4x + 2.25
+			b:          NewLine(NewVector(3, 3), 9), // y = 3 - x
+			expected:   NewVector(1, 2),
+			intersects: true,
+		},
+		{
+			name:       "x+y=0 and x-y=0",
+			a:          NewLine(NewVector(1, 1), 0),  // y = -1/4x + 2.25
+			b:          NewLine(NewVector(1, -1), 0), // y = 3 - x
+			expected:   NewVector(0, 0),
+			intersects: true,
+		},
+		{
+			name:       "3x + 2y = 12 and 3x + 2y = 18", // Shifted by +6 on the x axis.
+			a:          NewLine(NewVector(3, 2), 12),
+			b:          NewLine(NewVector(3, 2), 18),
+			expected:   Vector{},
+			intersects: false,
+		},
+		{
+			name:                 "Mismatched term count (2 to 3)",
+			a:                    NewLine(NewVector(3, 2), 12),
+			b:                    NewLine(NewVector(3, 2, 1), 18),
+			expected:             Vector{},
+			intersects:           false,
+			expectedErrorMessage: "cannot calculate whether the vectors are parallel because they have different dimensions (2 and 3)",
+		},
+		{
+			name:       "Zero vector",
+			a:          NewLine(NewVector(0, 0), 0),
+			b:          NewLine(NewVector(1, 3), 0),
+			expected:   Vector{},
+			intersects: false,
+		},
+		{
+			name:       "Equal lines: x + y = 1 and -3x -3y = -3",
+			a:          NewLine(NewVector(1, 1), 1),
+			b:          NewLine(NewVector(-3, -3), -3),
+			expected:   NewVector(1, 0),
+			equal:      true,
+			intersects: true,
+		},
+	}
+
+	for _, test := range tests {
+		actual, intersects, equal, err := test.a.IntersectionWith(test.b)
+
+		if !actual.Eq(test.expected) {
+			t.Errorf("%s: Expected '%v', but got '%v'", test.name, test.expected, actual)
+		}
+
+		if intersects != test.intersects {
+			t.Errorf("%s: Expected intersection to be %v, but was %v", test.name, test.intersects, intersects)
+		}
+
+		if equal != test.equal {
+			t.Errorf("%s: Expected equal to be %v, but was %v", test.name, test.equal, equal)
+		}
+
+		if err != nil {
+			if test.expectedErrorMessage == "" {
+				t.Errorf("%s: Comparing '%v' and '%v', no error was expected but got '%v'", test.name, test.a, test.b, err)
+				continue
+			}
+
+			if !strings.HasSuffix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("%s: Comparing '%v' and '%v' - expected error message to start with %v, but got '%v'", test.name, test.a, test.b, test.expectedErrorMessage, err)
+			}
+		}
+	}
+}
+
+func TestYFunction(t *testing.T) {
+	tests := []struct {
+		line      Line
+		inputX    float64
+		expectedY float64
+	}{
+		{
+			line:      NewLine(NewVector(1, 4), 9),
+			inputX:    1.0,
+			expectedY: 2.0,
+		},
+		{
+			line:      NewLine(NewVector(3, 3), 9),
+			inputX:    1.0,
+			expectedY: 2.0,
+		},
+		{
+			line:      NewLine(NewVector(3, 3), 9),
+			inputX:    3.0,
+			expectedY: 0.0,
+		},
+	}
+
+	for _, test := range tests {
+		actualY := test.line.Y(test.inputX)
+
+		if actualY != test.expectedY {
+			t.Errorf("For line %v. At x=%v, expected y=%v, but got (%v, %v)", test.line, test.inputX, test.expectedY, test.inputX, actualY)
+		}
+	}
+}
+
+func TestXFunction(t *testing.T) {
+	tests := []struct {
+		line      Line
+		inputY    float64
+		expectedX float64
+	}{
+		{
+			line:      NewLine(NewVector(1, 4), 9),
+			inputY:    2.0,
+			expectedX: 1.0,
+		},
+		{
+			line:      NewLine(NewVector(3, 3), 9),
+			inputY:    2.0,
+			expectedX: 1.0,
+		},
+	}
+
+	for _, test := range tests {
+		actualX := test.line.X(test.inputY)
+
+		if actualX != test.expectedX {
+			t.Errorf("For line %v. At y=%v, expected x=%v, but got (%v, %v)", test.line, test.inputY, test.expectedX, actualX, test.inputY)
 		}
 	}
 }

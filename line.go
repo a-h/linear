@@ -20,6 +20,22 @@ type Line struct {
 // NewLine creates a new Line based on the variable terms, e.g.:
 // Ax + By = C
 // For example, for a 2D vector (2, 3) and constant 5 would result in 2x + 3y = 5
+// The slope intercept (y = mx + b) form of that would be:
+//  2x + 3y = 5
+//       3y = 5 - 2x
+//        y = 1/3(5-2x)
+// To get back to standard form:
+// To find the y intercept (a point on the line), set x to zero.
+//  2x + 3y = 5
+//       3y = 5 - 0
+//        y = 5/3
+//  y intercept = (0, 5/3)
+// To find the x intercept, set y to zero.
+//  2x + 3y = 5
+//  2x - 0 = 5
+//  2x = 5
+//  x = 5/2
+//   x intercept = (5/2, 0)
 func NewLine(normalVector Vector, constantTerm float64) Line {
 	basepointVector := make([]float64, len(normalVector))
 	nonZeroIndex := firstNonZeroElement(normalVector)
@@ -120,9 +136,8 @@ func (l1 Line) Eq(l2 Line) (bool, error) {
 		if !l2.NormalVector.IsZeroVector() {
 			return false, nil
 		}
-		// Check the constant term is zero.
-		diff := l1.ConstantTerm - l2.ConstantTerm
-		return tolerance.IsWithin(diff, 0.0, DefaultTolerance), nil
+		// Check the constant terms are the same if both are zero vectors.
+		return tolerance.IsWithin(l1.ConstantTerm, l2.ConstantTerm, DefaultTolerance), nil
 	}
 
 	// If they're not parallel, there's no way they're going to be equal.
@@ -139,4 +154,93 @@ func (l1 Line) Eq(l2 Line) (bool, error) {
 
 	// No need to check orthogonality of both vectors, because they're parallel to each other.
 	return basepointDifference.IsOrthogonalTo(l1.NormalVector)
+}
+
+// Y gets the Y value for a given X.
+func (l1 Line) Y(x float64) float64 {
+	// ax + by = c
+	// by = c - ax
+	// y = (c - ax) / b
+	return (l1.ConstantTerm - (l1.NormalVector[0] * x)) / l1.NormalVector[1]
+}
+
+// X gets the X value for a given Y value.
+func (l1 Line) X(y float64) float64 {
+	// ax + by = c
+	// ax = c - by
+	// x = (c - by) / a
+	return (l1.ConstantTerm - (l1.NormalVector[1] * y)) / l1.NormalVector[0]
+}
+
+// IntersectionWith calculates the intersection with another line.
+// intersects is set to true if the lines intersect.
+// equal is set to true if the lines are equal and therefore intersect infinitely many times.
+func (l1 Line) IntersectionWith(l2 Line) (intersection Vector, intersects bool, equal bool, err error) {
+	// Handle zero vector edge case.
+	if l1.NormalVector.IsZeroVector() || l2.NormalVector.IsZeroVector() {
+		return Vector{}, false, false, nil
+	}
+
+	// If the lines are equal, there are infinitely many intersections.
+	eq, err := l1.Eq(l2)
+	if err != nil {
+		return Vector{}, false, false, err
+	}
+	if eq {
+		return l1.Basepoint, true, true, nil
+	}
+
+	// If the lines are parallel but not equal, there will never be an intersection unless the lines are equal.
+	// No need to catch the error, the Eq test above has already done the same.
+	isParallel, _ := l1.IsParallelTo(l2)
+	if isParallel {
+		return Vector{}, false, false, nil
+	}
+
+	// If two lines have the equations y=ax+c and y=bx+d
+	// If they intersect, at that point, the y value should be equal, so:
+	// ax+c=bx+d
+	// To extract the x value where that should be:
+	// ax-bx=d-c
+	// x = d-c / a-b
+	// To get the y value, then we need to insert the value of x into one of the line values.
+	// Since we've just defined x = d-c / a-b
+	// y = ax + c
+	// y = a(d-c/a-b) + b
+
+	// Rearrange to slope intercept form.
+	// y1 := (l1.ConstantTerm - (l1.NormalVector[0] * x)) / l1.NormalVector[1]
+	// y2 := (l2.ConstantTerm - (l2.NormalVector[0] * x)) / l2.NormalVector[1]
+	// y1 = y2
+	// Rearrange to find x
+	// (l1.ConstantTerm - (l1.NormalVector[0] * x)) / l1.NormalVector[1] = (l2.ConstantTerm - (l2.NormalVector[0] * x)) / l2.NormalVector[1]
+	// (l1.ConstantTerm / l1.NormalVector[1]) - ((l1.NormalVector[0] * x) / l1.NormalVector[1]) = (l2.ConstantTerm / l2.NormalVector[1]) - ((l2.NormalVector[0] * x) / l2.NormalVector[1])
+	// - ((l1.NormalVector[0] * x) / l1.NormalVector[1]) = (l2.ConstantTerm / l2.NormalVector[1]) - ((l2.NormalVector[0] * x) / l2.NormalVector[1]) - (l1.ConstantTerm / l1.NormalVector[1])
+	// ((l2.NormalVector[0] * x) / l2.NormalVector[1]) - ((l1.NormalVector[0] * x) / l1.NormalVector[1]) = (l2.ConstantTerm / l2.NormalVector[1]) - (l1.ConstantTerm / l1.NormalVector[1])
+	// Can get rid of the denominators now!
+	// (l2.NormalVector[0] * x) - (l1.NormalVector[0] * x) = (l2.ConstantTerm) - (l1.ConstantTerm)
+	// x = (l2.ConstantTerm - l1.ConstantTerm) / (l2.NormalVector[0] - l1.NormalVector[0])
+	// This is equal to x = d-c / a-b above
+	// So ...
+	// y = a(d-c/a-b) + b
+	// y = l1.NormalVector[0] * ((l2.ConstantTerm - l1.ConstantTerm) / (l2.NormalVector[0] - l1.NormalVector[0])) + l2.NormalVector[0]
+
+	x := (l2.ConstantTerm - l1.ConstantTerm) / (l2.NormalVector[0] - l1.NormalVector[0])
+	y := (l1.NormalVector[0] * x) + l2.NormalVector[0]
+
+	return NewVector(x, y), true, false, nil
+
+	// Adapted from Udacity code. Passes the tests, but I haven't worked it out from first principles yet...
+	/*
+		a, b := l1.NormalVector[0], l1.NormalVector[1]
+		c, d := l2.NormalVector[0], l2.NormalVector[1]
+		k1 := l1.ConstantTerm
+		k2 := l2.ConstantTerm
+
+		xnum := d*k1 - b*k2
+		ynum := -c*k1 + a*k2
+
+		oneOver := float64(1.0) / (a*d - b*c)
+		return NewVector(xnum, ynum).Scale(oneOver), true, false, nil
+	*/
 }
