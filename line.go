@@ -211,7 +211,7 @@ func (l1 Line) IntersectionWith(l2 Line) (intersection Vector, intersects bool, 
 	// dx + ey = f
 	// Find the definition of y
 	// by = c - ax
-	// y = (c - ax)/b
+	// y = (c - ax)/b (use later to calculate the y value once we have the value of x)
 	// Insert the reworked equation in to replace y in the 2nd equation and get the value of x
 	// dx + ey = f
 	// dx + e((c - ax)/b) = f
