@@ -197,48 +197,44 @@ func (l1 Line) IntersectionWith(l2 Line) (intersection Vector, intersects bool, 
 		return Vector{}, false, false, nil
 	}
 
-	// If two lines have the equations y=ax+c and y=bx+d
-	// If they intersect, at that point, the y value should be equal, so:
-	// ax+c=bx+d
-	// To extract the x value where that should be:
-	// ax-bx=d-c
-	// x = d-c / a-b
-	// To get the y value, then we need to insert the value of x into one of the line values.
-	// Since we've just defined x = d-c / a-b
-	// y = ax + c
-	// y = a(d-c/a-b) + b
+	// Explanation at http://math.stackexchange.com/questions/48395/how-to-find-the-point-of-intersection-of-two-lines
+	// And https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection#Given_the_equations_of_the_lines
+	// At the point where the two lines intersect (if they do), both y coordinates will be the same, hence the following equality:
+	// y=ax+c and y=bx+d
+	// i.e. ax+c=bx+d
 
-	// Rearrange to slope intercept form.
-	// y1 := (l1.ConstantTerm - (l1.NormalVector[0] * x)) / l1.NormalVector[1]
-	// y2 := (l2.ConstantTerm - (l2.NormalVector[0] * x)) / l2.NormalVector[1]
-	// y1 = y2
-	// Rearrange to find x
-	// (l1.ConstantTerm - (l1.NormalVector[0] * x)) / l1.NormalVector[1] = (l2.ConstantTerm - (l2.NormalVector[0] * x)) / l2.NormalVector[1]
-	// (l1.ConstantTerm / l1.NormalVector[1]) - ((l1.NormalVector[0] * x) / l1.NormalVector[1]) = (l2.ConstantTerm / l2.NormalVector[1]) - ((l2.NormalVector[0] * x) / l2.NormalVector[1])
-	// - ((l1.NormalVector[0] * x) / l1.NormalVector[1]) = (l2.ConstantTerm / l2.NormalVector[1]) - ((l2.NormalVector[0] * x) / l2.NormalVector[1]) - (l1.ConstantTerm / l1.NormalVector[1])
-	// ((l2.NormalVector[0] * x) / l2.NormalVector[1]) - ((l1.NormalVector[0] * x) / l1.NormalVector[1]) = (l2.ConstantTerm / l2.NormalVector[1]) - (l1.ConstantTerm / l1.NormalVector[1])
-	// Can get rid of the denominators now!
-	// (l2.NormalVector[0] * x) - (l1.NormalVector[0] * x) = (l2.ConstantTerm) - (l1.ConstantTerm)
-	// x = (l2.ConstantTerm - l1.ConstantTerm) / (l2.NormalVector[0] - l1.NormalVector[0])
-	// This is equal to x = d-c / a-b above
-	// So ...
-	// y = a(d-c/a-b) + b
-	// y = l1.NormalVector[0] * ((l2.ConstantTerm - l1.ConstantTerm) / (l2.NormalVector[0] - l1.NormalVector[0])) + l2.NormalVector[0]
+	a, b, c := l1.NormalVector[0], l1.NormalVector[1], l1.ConstantTerm
+	d, e, f := l2.NormalVector[0], l2.NormalVector[1], l2.ConstantTerm
 
-	x := (l2.ConstantTerm - l1.ConstantTerm) / (l2.NormalVector[0] - l1.NormalVector[0])
-	y := (l1.NormalVector[0] * x) + l2.NormalVector[0]
-
+	// Given that x and y have the same value in each equation.
+	// ax + by = c
+	// dx + ey = f
+	// Find the definition of y
+	// by = c - ax
+	// y = (c - ax)/b
+	// Insert the reworked equation in to replace y in the 2nd equation and get the value of x
+	// dx + ey = f
+	// dx + e((c - ax)/b) = f
+	// dx + ec/b - eax/b = f
+	// dx - eax/b = f - ec/b
+	// bdx - eax = bf - ec
+	// x(bd - ea) = bf - ec
+	// x = bf - ec / bd - ea
+	// x = f - ec / d - ea
+	// x = f - c / d - a
+	x := ((b * f) - (e * c)) / ((b * d) - (e * a))
+	y := (c - (a * x)) / b
 	return NewVector(x, y), true, false, nil
 
 	// Adapted from Udacity code. Passes the tests, but I haven't worked it out from first principles yet...
 	/*
 		a, b := l1.NormalVector[0], l1.NormalVector[1]
 		c, d := l2.NormalVector[0], l2.NormalVector[1]
-		k1 := l1.ConstantTerm
-		k2 := l2.ConstantTerm
+		f := l1.ConstantTerm
+		g := l2.ConstantTerm
 
-		xnum := d*k1 - b*k2
-		ynum := -c*k1 + a*k2
+		xnum := d*f - b*g
+		ynum := -c*f + a*g
 
 		oneOver := float64(1.0) / (a*d - b*c)
 		return NewVector(xnum, ynum).Scale(oneOver), true, false, nil
