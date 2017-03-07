@@ -220,8 +220,6 @@ func (l1 Line) IntersectionWith(l2 Line) (intersection Vector, intersects bool, 
 	// bdx - eax = bf - ec
 	// x(bd - ea) = bf - ec
 	// x = bf - ec / bd - ea
-	// x = f - ec / d - ea
-	// x = f - c / d - a
 	x := ((b * f) - (e * c)) / ((b * d) - (e * a))
 	y := (c - (a * x)) / b
 	return NewVector(x, y), true, false, nil
