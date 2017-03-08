@@ -202,7 +202,6 @@ func (l1 Line) IntersectionWith(l2 Line) (intersection Vector, intersects bool, 
 	// At the point where the two lines intersect (if they do), both y coordinates will be the same, hence the following equality:
 	// y=ax+c and y=bx+d
 	// i.e. ax+c=bx+d
-
 	a, b, c := l1.NormalVector[0], l1.NormalVector[1], l1.ConstantTerm
 	d, e, f := l2.NormalVector[0], l2.NormalVector[1], l2.ConstantTerm
 
@@ -223,18 +222,4 @@ func (l1 Line) IntersectionWith(l2 Line) (intersection Vector, intersects bool, 
 	x := ((b * f) - (e * c)) / ((b * d) - (e * a))
 	y := (c - (a * x)) / b
 	return NewVector(x, y), true, false, nil
-
-	// Adapted from Udacity code. Passes the tests, but I haven't worked it out from first principles yet...
-	/*
-		a, b := l1.NormalVector[0], l1.NormalVector[1]
-		c, d := l2.NormalVector[0], l2.NormalVector[1]
-		f := l1.ConstantTerm
-		g := l2.ConstantTerm
-
-		xnum := d*f - b*g
-		ynum := -c*f + a*g
-
-		oneOver := float64(1.0) / (a*d - b*c)
-		return NewVector(xnum, ynum).Scale(oneOver), true, false, nil
-	*/
 }
