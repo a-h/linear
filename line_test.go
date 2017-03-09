@@ -230,7 +230,7 @@ func TestIntersectionFunction(t *testing.T) {
 			b:                    NewLine(NewVector(3, 2, 1), 18),
 			expected:             Vector{},
 			intersects:           false,
-			expectedErrorMessage: "cannot calculate whether the vectors are parallel because they have different dimensions (2 and 3)",
+			expectedErrorMessage: "The IntersectionWith function requires that both lines must have 2 dimensions. The base line has 2 dimensions, l2 has 3 dimensions.",
 		},
 		{
 			name:       "Zero vector",
@@ -279,9 +279,10 @@ func TestIntersectionFunction(t *testing.T) {
 
 func TestYFunction(t *testing.T) {
 	tests := []struct {
-		line      Line
-		inputX    float64
-		expectedY float64
+		line                 Line
+		inputX               float64
+		expectedY            float64
+		expectedErrorMessage string
 	}{
 		{
 			line:      NewLine(NewVector(1, 4), 9),
@@ -298,22 +299,40 @@ func TestYFunction(t *testing.T) {
 			inputX:    3.0,
 			expectedY: 0.0,
 		},
+		{
+			line:                 NewLine(NewVector(1), 7),
+			inputX:               3.0,
+			expectedY:            0.0,
+			expectedErrorMessage: "The Y function only supports lines with 2 dimensions.",
+		},
 	}
 
 	for _, test := range tests {
-		actualY := test.line.Y(test.inputX)
+		actualY, err := test.line.Y(test.inputX)
 
 		if actualY != test.expectedY {
 			t.Errorf("For line %v. At x=%v, expected y=%v, but got (%v, %v)", test.line, test.inputX, test.expectedY, test.inputX, actualY)
+		}
+
+		if err != nil {
+			if test.expectedErrorMessage == "" {
+				t.Errorf("For line '%v', no error was expected but got '%v'", test.line, err)
+				continue
+			}
+
+			if !strings.HasSuffix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("For line '%v' - expected error message to start with '%v', but got '%v'", test.line, test.expectedErrorMessage, err)
+			}
 		}
 	}
 }
 
 func TestXFunction(t *testing.T) {
 	tests := []struct {
-		line      Line
-		inputY    float64
-		expectedX float64
+		line                 Line
+		inputY               float64
+		expectedX            float64
+		expectedErrorMessage string
 	}{
 		{
 			line:      NewLine(NewVector(1, 4), 9),
@@ -325,13 +344,30 @@ func TestXFunction(t *testing.T) {
 			inputY:    2.0,
 			expectedX: 1.0,
 		},
+		{
+			line:                 NewLine(NewVector(1, 2, 3), 7),
+			inputY:               3.0,
+			expectedX:            0.0,
+			expectedErrorMessage: "The X function only supports lines with 2 dimensions.",
+		},
 	}
 
 	for _, test := range tests {
-		actualX := test.line.X(test.inputY)
+		actualX, err := test.line.X(test.inputY)
 
 		if actualX != test.expectedX {
 			t.Errorf("For line %v. At y=%v, expected x=%v, but got (%v, %v)", test.line, test.inputY, test.expectedX, actualX, test.inputY)
+		}
+
+		if err != nil {
+			if test.expectedErrorMessage == "" {
+				t.Errorf("For line '%v', no error was expected but got '%v'", test.line, err)
+				continue
+			}
+
+			if !strings.HasSuffix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("For line '%v' - expected error message to start with '%v', but got '%v'", test.line, test.expectedErrorMessage, err)
+			}
 		}
 	}
 }

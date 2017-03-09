@@ -2,6 +2,7 @@ package linear
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -12,7 +13,6 @@ import (
 // Line consists of a normal vector which specifies the direction, and a constant term.
 // The basepoint is calculated by the NewLine function.
 type Line struct {
-	Basepoint    Vector
 	NormalVector Vector
 	ConstantTerm float64
 }
@@ -37,25 +37,29 @@ type Line struct {
 //  x = 5/2
 //   x intercept = (5/2, 0)
 func NewLine(normalVector Vector, constantTerm float64) Line {
-	basepointVector := make([]float64, len(normalVector))
-	nonZeroIndex := firstNonZeroElement(normalVector)
-	basepointVector[nonZeroIndex] = constantTerm / normalVector[nonZeroIndex]
-
 	return Line{
 		ConstantTerm: constantTerm,
-		Basepoint:    basepointVector,
 		NormalVector: normalVector,
 	}
 }
 
-func firstNonZeroElement(v Vector) (index int) {
+// NonZeroValuePoint finds a point on the Line where value is not zero.
+func (l1 Line) NonZeroValuePoint() Vector {
+	basepointVector := make([]float64, len(l1.NormalVector))
+	index, value := firstNonZeroElement(l1.NormalVector)
+	basepointVector[index] = l1.ConstantTerm / value
+	return Vector(basepointVector)
+}
+
+func firstNonZeroElement(v Vector) (index int, value float64) {
 	for i := 0; i < len(v); i++ {
-		if !tolerance.IsWithin(v[i], 0, DefaultTolerance) {
-			return i
+		value := v[i]
+		if !tolerance.IsWithin(value, 0, DefaultTolerance) {
+			return i, value
 		}
 	}
 
-	return 0
+	return 0, 0
 }
 
 func (l1 Line) String() string {
@@ -150,44 +154,51 @@ func (l1 Line) Eq(l2 Line) (bool, error) {
 	// The vector that joins the lines should be orthogonal to the normal vector, or it's not equal.
 	// No need to capture the error here, because the error would be because the number of terms in the vector
 	// is different, which is already captured by the parallel check.
-	basepointDifference, _ := l1.Basepoint.Sub(l2.Basepoint)
+	connectingVector, _ := l1.NonZeroValuePoint().Sub(l2.NonZeroValuePoint())
 
 	// No need to check orthogonality of both vectors, because they're parallel to each other.
-	return basepointDifference.IsOrthogonalTo(l1.NormalVector)
+	return connectingVector.IsOrthogonalTo(l1.NormalVector)
 }
 
 // Y gets the Y value for a given X.
-func (l1 Line) Y(x float64) float64 {
+func (l1 Line) Y(x float64) (float64, error) {
+	if len(l1.NormalVector) != 2 {
+		return 0, errors.New("The Y function only supports lines with 2 dimensions.")
+	}
 	// ax + by = c
 	// by = c - ax
 	// y = (c - ax) / b
-	return (l1.ConstantTerm - (l1.NormalVector[0] * x)) / l1.NormalVector[1]
+	return (l1.ConstantTerm - (l1.NormalVector[0] * x)) / l1.NormalVector[1], nil
 }
 
 // X gets the X value for a given Y value.
-func (l1 Line) X(y float64) float64 {
+func (l1 Line) X(y float64) (float64, error) {
+	if len(l1.NormalVector) != 2 {
+		return 0, errors.New("The X function only supports lines with 2 dimensions.")
+	}
 	// ax + by = c
 	// ax = c - by
 	// x = (c - by) / a
-	return (l1.ConstantTerm - (l1.NormalVector[1] * y)) / l1.NormalVector[0]
+	return (l1.ConstantTerm - (l1.NormalVector[1] * y)) / l1.NormalVector[0], nil
 }
 
-// IntersectionWith calculates the intersection with another line.
+// IntersectionWith calculates the intersection with another 2D line.
 // intersects is set to true if the lines intersect.
 // equal is set to true if the lines are equal and therefore intersect infinitely many times.
 func (l1 Line) IntersectionWith(l2 Line) (intersection Vector, intersects bool, equal bool, err error) {
+	if len(l1.NormalVector) != 2 || len(l2.NormalVector) != 2 {
+		return Vector{}, false, false, fmt.Errorf("The IntersectionWith function requires that both lines must have 2 dimensions. The base line has %d dimensions, l2 has %d dimensions.", len(l1.NormalVector), len(l2.NormalVector))
+	}
+
 	// Handle zero vector edge case.
 	if l1.NormalVector.IsZeroVector() || l2.NormalVector.IsZeroVector() {
 		return Vector{}, false, false, nil
 	}
 
 	// If the lines are equal, there are infinitely many intersections.
-	eq, err := l1.Eq(l2)
-	if err != nil {
-		return Vector{}, false, false, err
-	}
-	if eq {
-		return l1.Basepoint, true, true, nil
+	// No need to catch the error, because we've already checked that the vectors have equal lengths.
+	if eq, _ := l1.Eq(l2); eq {
+		return l1.NonZeroValuePoint(), true, true, nil
 	}
 
 	// If the lines are parallel but not equal, there will never be an intersection unless the lines are equal.
