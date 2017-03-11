@@ -98,6 +98,18 @@ func TestParallelLineFunction(t *testing.T) {
 			b:        NewLine(NewVector(1, 1), 2),
 			expected: false,
 		},
+		{
+			name:     "3D: 1x + 1y + 1z = 3 and 1x + 1y + 1z = 4",
+			a:        NewLine(NewVector(1, 1, 1), 3),
+			b:        NewLine(NewVector(1, 1, 1), 4),
+			expected: true,
+		},
+		{
+			name:     "3D: 1x + 1y + 1z = 3 and 1x + 2y + 1z = 4",
+			a:        NewLine(NewVector(1, 1, 1), 3),
+			b:        NewLine(NewVector(1, 2, 1), 4),
+			expected: false,
+		},
 	}
 
 	for _, test := range tests {
@@ -163,6 +175,18 @@ func TestEqualFunction(t *testing.T) {
 			b:                    NewLine(NewVector(3, 2, 1), 1),
 			expected:             false,
 			expectedErrorMessage: "annot calculate whether the vectors are parallel because they have different dimensions (2 and 3)",
+		},
+		{
+			name:     "3D: 1x + 1y + 1z = 0 and -3x - 3y -3z = 0",
+			a:        NewLine(NewVector(1, 1, 1), 0),
+			b:        NewLine(NewVector(-3, -3, -3), 0),
+			expected: true, // Still on the same plane.
+		},
+		{
+			name:     "3D: 2x + 1y + 1z = 0 and -3x - 3y -3z = 0",
+			a:        NewLine(NewVector(2, 1, 1), 0),
+			b:        NewLine(NewVector(-3, -3, -3), 0),
+			expected: false,
 		},
 	}
 

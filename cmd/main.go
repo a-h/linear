@@ -27,6 +27,8 @@ func main() {
 		quiz6()
 	case 7:
 		quiz7()
+	case 8:
+		quiz8()
 	default:
 		fmt.Println("Quiz not found.")
 	}
@@ -186,7 +188,7 @@ func quiz6() { // Coding cross products
 	fmt.Println("c: ", round.ToEven(c, 3))
 }
 
-func quiz7() {
+func quiz7() { // Insections of lines
 	questions := []struct {
 		a linear.Line
 		b linear.Line
@@ -220,5 +222,42 @@ func quiz7() {
 		}
 
 		fmt.Printf("equal: %v\n", equal)
+	}
+}
+
+func quiz8() { // Parallel and equal planes
+	questions := []struct {
+		a linear.Line
+		b linear.Line
+	}{
+		{
+			a: linear.NewLine(linear.NewVector(-0.412, 3.806, 0.728), -3.46),
+			b: linear.NewLine(linear.NewVector(1.03, -9.515, -1.82), 8.65),
+		},
+		{
+			a: linear.NewLine(linear.NewVector(2.611, 5.528, 0.283), 4.6),
+			b: linear.NewLine(linear.NewVector(7.715, 8.306, 5.342), 3.76),
+		},
+		{
+			a: linear.NewLine(linear.NewVector(-7.926, 8.625, -7.212), -7.952),
+			b: linear.NewLine(linear.NewVector(-2.642, 2.875, -2.404), -2.443),
+		},
+	}
+
+	for i, q := range questions {
+		equal, err := q.a.Eq(q.b)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		parallel, err := q.a.IsParallelTo(q.b)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		fmt.Printf("%d: ", i)
+		fmt.Printf("equal: %v,  parallel: %v\n", equal, parallel)
 	}
 }
