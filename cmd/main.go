@@ -25,6 +25,8 @@ func main() {
 		quiz5()
 	case 6:
 		quiz6()
+	case 7:
+		quiz7()
 	default:
 		fmt.Println("Quiz not found.")
 	}
@@ -182,4 +184,41 @@ func quiz6() { // Coding cross products
 		return
 	}
 	fmt.Println("c: ", round.ToEven(c, 3))
+}
+
+func quiz7() {
+	questions := []struct {
+		a linear.Line
+		b linear.Line
+	}{
+		{
+			a: linear.NewLine(linear.NewVector(4.046, 2.836), 1.21),
+			b: linear.NewLine(linear.NewVector(10.115, 7.09), 3.025),
+		},
+		{
+			a: linear.NewLine(linear.NewVector(7.204, 3.182), 8.68),
+			b: linear.NewLine(linear.NewVector(8.172, 4.114), 9.883),
+		},
+		{
+			a: linear.NewLine(linear.NewVector(1.182, 5.562), 6.744),
+			b: linear.NewLine(linear.NewVector(1.773, 8.343), 9.525),
+		},
+	}
+
+	for i, q := range questions {
+		v, intersects, equal, err := q.a.IntersectionWith(q.b)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		fmt.Printf("%d: ", i)
+		if intersects {
+			fmt.Printf("%v ", v.Round(3))
+		} else {
+			fmt.Printf("no intersection ")
+		}
+
+		fmt.Printf("equal: %v\n", equal)
+	}
 }
