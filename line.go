@@ -63,6 +63,7 @@ func firstNonZeroElement(v Vector) (index int, value float64) {
 }
 
 func (l1 Line) String() string {
+	//TODO: Write out zeroes for the coefficient or skip the term.
 	buf := bytes.Buffer{}
 	for i, p := range l1.NormalVector {
 		if i == 0 {
