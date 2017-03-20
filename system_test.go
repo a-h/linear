@@ -216,25 +216,104 @@ func TestSystemStringFunction(t *testing.T) {
 	}
 }
 
+func TestSystemMultiplyFunction(t *testing.T) {
+	tests := []struct {
+		name                 string
+		input                System
+		coefficient          float64
+		index                int
+		expected             System
+		expectedErrorMessage string
+	}{
+		{
+			name: "multiply by 0",
+			input: NewSystem(
+				NewLine(NewVector(1, 1, 1), 1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(1, 1, -1), 3),
+				NewLine(NewVector(1, 0, -2), 2)),
+			index:       0,
+			coefficient: 0,
+			expected: NewSystem(
+				NewLine(NewVector(0, 0, 0), 0),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(1, 1, -1), 3),
+				NewLine(NewVector(1, 0, -2), 2)),
+		},
+		{
+			name: "multiply by -1",
+			input: NewSystem(
+				NewLine(NewVector(1, 1, 1), 1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(1, 1, -1), 3),
+				NewLine(NewVector(1, 0, -2), 2)),
+			index:       0,
+			coefficient: -1,
+			expected: NewSystem(
+				NewLine(NewVector(-1, -1, -1), -1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(1, 1, -1), 3),
+				NewLine(NewVector(1, 0, -2), 2)),
+		},
+		{
+			name: "multiply by 3",
+			input: NewSystem(
+				NewLine(NewVector(1, 1, 1), 1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(1, 1, -1), 3),
+				NewLine(NewVector(1, 0, -2), 2)),
+			index:       3,
+			coefficient: 3,
+			expected: NewSystem(
+				NewLine(NewVector(-1, -1, -1), -1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(1, 1, -1), 3),
+				NewLine(NewVector(3, 0, -6), 6)),
+		},
+		{
+			name: "above range",
+			input: NewSystem(
+				NewLine(NewVector(1, 1, 1), 1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(1, 1, -1), 3),
+				NewLine(NewVector(1, 0, -2), 2)),
+			index:                4,
+			coefficient:          3,
+			expectedErrorMessage: "index 4 is not present in the system",
+		},
+		{
+			name: "under range",
+			input: NewSystem(
+				NewLine(NewVector(1, 1, 1), 1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(1, 1, -1), 3),
+				NewLine(NewVector(1, 0, -2), 2)),
+			index:                -1,
+			coefficient:          3,
+			expectedErrorMessage: "index -1 is not present in the system",
+		},
+	}
+
+	for _, test := range tests {
+		actual, err := test.input.Multiply(test.index, test.coefficient)
+		if err != nil {
+			if !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("%s: unexpected error multiplying: %v\n", test.name, err)
+			}
+			continue
+		}
+
+		eq, err := actual.Eq(test.expected)
+		if err != nil && !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
+			t.Errorf("%s: unexpected error comparing s1 and s2: %v\n", test.name, err)
+		}
+		if !eq {
+			t.Errorf("%s: expected %v, but got %v", test.name, test.expected, actual)
+		}
+	}
+}
+
 /*
-s.multiply_coefficient_and_row(1,0)
-if not (s[0] == p1 and s[1] == p0 and s[2] == p2 and s[3] == p3):
-    print 'test case 4 failed'
-
-s.multiply_coefficient_and_row(-1,2)
-if not (s[0] == p1 and
-        s[1] == p0 and
-        s[2] == Plane(normal_vector=Vector(['-1','-1','1']), constant_term='-3') and
-        s[3] == p3):
-    print 'test case 5 failed'
-
-s.multiply_coefficient_and_row(10,1)
-if not (s[0] == p1 and
-        s[1] == Plane(normal_vector=Vector(['10','10','10']), constant_term='10') and
-        s[2] == Plane(normal_vector=Vector(['-1','-1','1']), constant_term='-3') and
-        s[3] == p3):
-    print 'test case 6 failed'
-
 s.add_multiple_times_row_to_row(0,0,1)
 if not (s[0] == p1 and
         s[1] == Plane(normal_vector=Vector(['10','10','10']), constant_term='10') and

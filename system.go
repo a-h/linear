@@ -62,3 +62,15 @@ func (s1 System) Swap(a int, b int) (System, error) {
 	op[a], op[b] = op[b], op[a]
 	return System(op), nil
 }
+
+// Multiply multiplies an equation by a coefficient.
+func (s1 System) Multiply(index int, coefficient float64) (System, error) {
+	if index >= len(s1) || index < 0 {
+		return System{}, fmt.Errorf("index %d is not present in the system", index)
+	}
+
+	op := []Line(s1)
+	op[index].NormalVector = op[index].NormalVector.Scale(coefficient)
+	op[index].ConstantTerm *= coefficient
+	return System(op), nil
+}
