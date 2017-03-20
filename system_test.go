@@ -80,7 +80,7 @@ func TestSystemEqualFunction(t *testing.T) {
 	}
 }
 
-func TestSwapFunction(t *testing.T) {
+func TestSystemSwapFunction(t *testing.T) {
 	tests := []struct {
 		name                 string
 		input                System
@@ -183,6 +183,35 @@ func TestSwapFunction(t *testing.T) {
 		}
 		if !eq {
 			t.Errorf("%s: expected %v, but got %v", test.name, test.expected, actual)
+		}
+	}
+}
+
+func TestSystemStringFunction(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    System
+		expected string
+	}{
+		{
+			name: "single equation",
+			input: NewSystem(
+				NewLine(NewVector(1, 2, 3), 4)),
+			expected: "{ 1x₁ + 2x₂ + 3x₃ = 4 }",
+		},
+		{
+			name: "two equations",
+			input: NewSystem(
+				NewLine(NewVector(1, 2, 3), 4),
+				NewLine(NewVector(5, 6, 7), 8)),
+			expected: "{ 1x₁ + 2x₂ + 3x₃ = 4, 5x₁ + 6x₂ + 7x₃ = 8 }",
+		},
+	}
+
+	for _, test := range tests {
+		actual := test.input.String()
+		if actual != test.expected {
+			t.Errorf("%s: expected '%v', but got '%v'", test.name, test.expected, actual)
 		}
 	}
 }

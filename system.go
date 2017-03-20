@@ -1,6 +1,7 @@
 package linear
 
 import (
+	"bytes"
 	"fmt"
 )
 
@@ -13,7 +14,21 @@ func NewSystem(lines ...Line) System {
 	return System(lines)
 }
 
-//TODO: Add String function.
+// String writes out each equation in the system, delineated by commas and
+// surrounded by braces, e.g. { 1x₁ + 2x₂ + 3x₃ = 4, 5x₁ + 6x₂ + 7x₃ = 8 }
+func (s1 System) String() string {
+	buf := bytes.NewBufferString("{ ")
+
+	for i, e := range s1 {
+		buf.WriteString(e.String())
+		if i < len(s1)-1 {
+			buf.WriteString(", ")
+		}
+	}
+
+	buf.WriteString(" }")
+	return buf.String()
+}
 
 // Eq determies whether two systems are equal.
 func (s1 System) Eq(s2 System) (bool, error) {
