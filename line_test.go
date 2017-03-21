@@ -32,7 +32,7 @@ func TestLineStringRepresentation(t *testing.T) {
 		{
 			name:     "Zero Vector Line",
 			in:       NewLine(NewVector(0, 0), 3),
-			expected: "x₁ + x₂ = 3",
+			expected: "0x₁ + 0x₂ = 3",
 		},
 		{
 			name:     "-4x -3y = -12",

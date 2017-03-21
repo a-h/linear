@@ -63,15 +63,11 @@ func firstNonZeroElement(v Vector) (index int, value float64) {
 }
 
 func (l1 Line) String() string {
-	//TODO: Write out zeroes for the coefficient or skip the term.
 	buf := bytes.Buffer{}
 	for i, p := range l1.NormalVector {
 		if i == 0 {
 			// The first element should have an integrated +/- sign.
-			if !tolerance.IsWithin(p, 0.0, DefaultTolerance) {
-				// If the value is not zero, write it out.
-				buf.WriteString(fmt.Sprintf("%v", p))
-			}
+			buf.WriteString(fmt.Sprintf("%v", p))
 			// Write out the x_1 specifier.
 			buf.WriteString(fmt.Sprintf("x%s", getSubscript(i+1)))
 			continue
@@ -79,11 +75,7 @@ func (l1 Line) String() string {
 
 		// For anything after index zero, the sign becomes the operator.
 		buf.WriteString(operator(p))
-
-		// Write out the absolute value if it's non-zero.
-		if !tolerance.IsWithin(p, 0.0, DefaultTolerance) {
-			buf.WriteString(fmt.Sprintf("%v", math.Abs(p)))
-		}
+		buf.WriteString(fmt.Sprintf("%v", math.Abs(p)))
 		// Write out the x_1 specifier.
 		buf.WriteString(fmt.Sprintf("x%s", getSubscript(i+1)))
 	}
