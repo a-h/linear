@@ -1,6 +1,7 @@
 package linear
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -507,6 +508,58 @@ func TestSystemSubFunction(t *testing.T) {
 		}
 		if !eq {
 			t.Errorf("%s: expected %v, but got %v", test.name, test.expected, actual)
+		}
+	}
+}
+
+func TestSystemFindFirstNonZeroCoefficientsFunction(t *testing.T) {
+	tests := []struct {
+		input                System
+		expected             []int
+		expectedErrorMessage string
+	}{
+		{
+			input: NewSystem(
+				NewLine(NewVector(1, 0, 0), 1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(0, 0, 1), 3)),
+			expected: []int{0, 1, 2},
+		},
+		{
+			input: NewSystem(
+				NewLine(NewVector(1, 1, 1), 1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(1, 1, -1), 3),
+				NewLine(NewVector(1, 0, -2), 2)),
+			expected: []int{0, 1, 0, 0},
+		},
+		{
+			input: NewSystem(
+				NewLine(NewVector(0, 0, 0), 1)),
+			expected:             []int{0},
+			expectedErrorMessage: "failed to find a non-zero coefficient for equation at index 0",
+		},
+		{
+			input: NewSystem(
+				NewLine(NewVector(1, 1, 1), 1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(0, 0, 0), 3),
+				NewLine(NewVector(1, 0, -2), 2)),
+			expectedErrorMessage: "failed to find a non-zero coefficient for equation at index 2",
+		},
+	}
+
+	for i, test := range tests {
+		actual, err := test.input.FindFirstNonZeroCoefficients()
+		if err != nil {
+			if test.expectedErrorMessage == "" || !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("%d: unexpected error: %v\n", i, err)
+			}
+			continue
+		}
+
+		if !reflect.DeepEqual(actual, test.expected) {
+			t.Errorf("%d: expected %v, but got %v\n", i, test.expected, actual)
 		}
 	}
 }

@@ -120,3 +120,17 @@ func (s1 System) Sub(srcIndex int, dstIndex int, count int) (System, error) {
 	}
 	return System(op), nil
 }
+
+// FindFirstNonZeroCoefficients finds the indices of the first non-zero coefficient of each equation in the
+// system.
+func (s1 System) FindFirstNonZeroCoefficients() (indices []int, err error) {
+	indices = make([]int, len(s1))
+	for i, e := range s1 {
+		idx, _, ok := e.FirstNonZeroCoefficient()
+		if !ok {
+			return indices, fmt.Errorf("failed to find a non-zero coefficient for equation at index %d - %v", i, e)
+		}
+		indices[i] = idx
+	}
+	return indices, nil
+}

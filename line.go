@@ -43,23 +43,33 @@ func NewLine(normalVector Vector, constantTerm float64) Line {
 	}
 }
 
-// NonZeroValuePoint finds a point on the Line where value is not zero.
-func (l1 Line) NonZeroValuePoint() Vector {
+// NonZeroValuePoint finds a point on the Line where one of the dimension values is not zero.
+// If a non-zero coefficient is not found, ok is set to false.
+func (l1 Line) NonZeroValuePoint() (nonzero Vector, ok bool) {
 	basepointVector := make([]float64, len(l1.NormalVector))
-	index, value := firstNonZeroElement(l1.NormalVector)
+	index, value, ok := firstNonZeroElement(l1.NormalVector)
+	if !ok {
+		return Vector{}, false
+	}
 	basepointVector[index] = l1.ConstantTerm / value
-	return Vector(basepointVector)
+	return Vector(basepointVector), true
 }
 
-func firstNonZeroElement(v Vector) (index int, value float64) {
+// FirstNonZeroCoefficient finds the first non-zero coefficient of the normal vector of the plane.
+// If a non-zero coefficient is not found, ok is set to false.
+func (l1 Line) FirstNonZeroCoefficient() (index int, value float64, ok bool) {
+	return firstNonZeroElement(l1.NormalVector)
+}
+
+func firstNonZeroElement(v Vector) (index int, value float64, ok bool) {
 	for i := 0; i < len(v); i++ {
 		value := v[i]
 		if !tolerance.IsWithin(value, 0, DefaultTolerance) {
-			return i, value
+			return i, value, true
 		}
 	}
 
-	return 0, 0
+	return 0, 0, false
 }
 
 func (l1 Line) String() string {
@@ -129,8 +139,12 @@ func (l1 Line) IsParallelTo(l2 Line) (bool, error) {
 
 // Eq determines if two lines are equal.
 func (l1 Line) Eq(l2 Line) (bool, error) {
-	if l1.NormalVector.IsZeroVector() {
-		if !l2.NormalVector.IsZeroVector() {
+	// If either vector is zero, and the other isn't they're not equal.
+	l1IsZero := l1.NormalVector.IsZeroVector()
+	l2IsZero := l2.NormalVector.IsZeroVector()
+
+	if l1IsZero || l2IsZero {
+		if l1IsZero && !l2IsZero || !l1IsZero && l2IsZero {
 			return false, nil
 		}
 		// Check the constant terms are the same if both are zero vectors.
@@ -145,9 +159,13 @@ func (l1 Line) Eq(l2 Line) (bool, error) {
 
 	// Subtract a point on l2 from l1, which creates a vector between the two points.
 	// The vector that joins the lines should be orthogonal to the normal vector, or it's not equal.
-	// No need to capture the error here, because the error would be because the number of terms in the vector
+	// No need to capture the sub error here, because the error would be because the number of terms in the vector
 	// is different, which is already captured by the parallel check.
-	connectingVector, _ := l1.NonZeroValuePoint().Sub(l2.NonZeroValuePoint())
+	// No need to capture the ok coming back from l1 / l2's NonZeroValuePoint() because there's already a check
+	// to see if they're zero vectors above.
+	l1NonZeroPoint, _ := l1.NonZeroValuePoint()
+	l2NonZeroPoint, _ := l2.NonZeroValuePoint()
+	connectingVector, _ := l1NonZeroPoint.Sub(l2NonZeroPoint)
 
 	// No need to check orthogonality of both vectors, because they're parallel to each other.
 	return connectingVector.IsOrthogonalTo(l1.NormalVector)
@@ -191,7 +209,8 @@ func (l1 Line) IntersectionWith(l2 Line) (intersection Vector, intersects bool, 
 	// If the lines are equal, there are infinitely many intersections.
 	// No need to catch the error, because we've already checked that the vectors have equal lengths.
 	if eq, _ := l1.Eq(l2); eq {
-		return l1.NonZeroValuePoint(), true, true, nil
+		l1NonZeroValuePoint, _ := l1.NonZeroValuePoint()
+		return l1NonZeroValuePoint, true, true, nil
 	}
 
 	// If the lines are parallel but not equal, there will never be an intersection unless the lines are equal.

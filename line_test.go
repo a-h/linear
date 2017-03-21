@@ -152,7 +152,7 @@ func TestEqualFunction(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "Input is zero, base is not.",
+			name:     "Input is zero, base is not",
 			a:        NewLine(NewVector(1, 2), 1),
 			b:        NewLine(NewVector(0, 0), 1),
 			expected: false,
@@ -392,6 +392,37 @@ func TestXFunction(t *testing.T) {
 			if !strings.HasSuffix(err.Error(), test.expectedErrorMessage) {
 				t.Errorf("For line '%v' - expected error message to start with '%v', but got '%v'", test.line, test.expectedErrorMessage, err)
 			}
+		}
+	}
+}
+
+func TestNonZeroValuePointFunction(t *testing.T) {
+	tests := []struct {
+		input                Line
+		successExpected      bool
+		expectedVector       Vector
+		expectedErrorMessage string
+	}{
+		{
+			input:           NewLine(NewVector(1, 4), 9),
+			successExpected: true,
+			expectedVector:  NewVector(9, 0),
+		},
+		{
+			input:           NewLine(NewVector(0, 0), 9),
+			successExpected: false,
+		},
+	}
+
+	for _, test := range tests {
+		nz, ok := test.input.NonZeroValuePoint()
+
+		if ok != test.successExpected {
+			t.Errorf("For line %v. Expected to find a non-zero point = %v, but got %v", test.input, test.successExpected, ok)
+		}
+
+		if !nz.Eq(test.expectedVector) {
+			t.Errorf("For line %v. Expected non-zero point of %v, but got %v", test.input, test.expectedVector, nz)
 		}
 	}
 }
