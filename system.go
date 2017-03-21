@@ -75,8 +75,8 @@ func (s1 System) Multiply(index int, coefficient float64) (System, error) {
 	return System(op), nil
 }
 
-// Add adds the equation with srcIndex to the equation with index dstIndex 'count' times.
-func (s1 System) Add(srcIndex int, dstIndex int, count int) (System, error) {
+// Add adds the equation with srcIndex multiplied by the coefficient to the equation with index dstIndex.
+func (s1 System) Add(srcIndex int, dstIndex int, coefficient int) (System, error) {
 	if srcIndex >= len(s1) || srcIndex < 0 {
 		return System{}, fmt.Errorf("source index %d is not present in the system", srcIndex)
 	}
@@ -87,37 +87,15 @@ func (s1 System) Add(srcIndex int, dstIndex int, count int) (System, error) {
 
 	op := []Line(s1)
 	src := op[srcIndex]
-	for i := 0; i < count; i++ {
-		vec, err := op[dstIndex].NormalVector.Add(src.NormalVector)
-		if err != nil {
-			return System{}, err
-		}
-		op[dstIndex].NormalVector = vec
-		op[dstIndex].ConstantTerm += src.ConstantTerm
-	}
-	return System(op), nil
-}
+	multipliedVector := src.NormalVector.Scale(float64(coefficient))
 
-// Sub subtracts the equation with srcIndex from the equation with index dstIndex 'count' times.
-func (s1 System) Sub(srcIndex int, dstIndex int, count int) (System, error) {
-	if srcIndex >= len(s1) || srcIndex < 0 {
-		return System{}, fmt.Errorf("source index %d is not present in the system", srcIndex)
+	dst := op[dstIndex]
+	destinationVector, err := dst.NormalVector.Add(multipliedVector)
+	if err != nil {
+		return op, err
 	}
-
-	if dstIndex >= len(s1) || dstIndex < 0 {
-		return System{}, fmt.Errorf("destination index %d is not present in the system", dstIndex)
-	}
-
-	op := []Line(s1)
-	src := op[srcIndex]
-	for i := 0; i < count; i++ {
-		vec, err := op[dstIndex].NormalVector.Sub(src.NormalVector)
-		if err != nil {
-			return System{}, err
-		}
-		op[dstIndex].NormalVector = vec
-		op[dstIndex].ConstantTerm -= src.ConstantTerm
-	}
+	op[dstIndex].NormalVector = destinationVector
+	op[dstIndex].ConstantTerm += src.ConstantTerm * float64(coefficient)
 	return System(op), nil
 }
 

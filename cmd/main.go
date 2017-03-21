@@ -29,6 +29,8 @@ func main() {
 		quiz7()
 	case 8:
 		quiz8()
+	case 9:
+		quiz9()
 	default:
 		fmt.Println("Quiz not found.")
 	}
@@ -260,4 +262,45 @@ func quiz8() { // Parallel and equal planes
 		fmt.Printf("%d: ", i)
 		fmt.Printf("equal: %v,  parallel: %v\n", equal, parallel)
 	}
+}
+
+func quiz9() { // Coding row operations
+	// Converted the Python code from Udacity to match the Go I've written.
+	p0 := linear.NewLine(linear.NewVector(1, 1, 1), 1)
+	p1 := linear.NewLine(linear.NewVector(0, 1, 0), 2)
+	p2 := linear.NewLine(linear.NewVector(1, 1, -1), 3)
+	p3 := linear.NewLine(linear.NewVector(1, 0, -2), 2)
+
+	s := linear.NewSystem(p0, p1, p2, p3)
+
+	// Tests
+	s = test(1, func() (linear.System, error) { return s.Swap(0, 1) }, linear.NewSystem(p1, p0, p2, p3))
+	s = test(2, func() (linear.System, error) { return s.Swap(1, 3) }, linear.NewSystem(p1, p3, p2, p0))
+	s = test(3, func() (linear.System, error) { return s.Swap(3, 1) }, linear.NewSystem(p1, p0, p2, p3))
+	s = test(4, func() (linear.System, error) { return s.Multiply(0, 1) }, linear.NewSystem(p1, p0, p2, p3))
+	p2_2 := linear.NewLine(linear.NewVector(-1, -1, 1), -3)
+	s = test(5, func() (linear.System, error) { return s.Multiply(2, -1) }, linear.NewSystem(p1, p0, p2_2, p3))
+	p1_2 := linear.NewLine(linear.NewVector(10, 10, 10), 10)
+	s = test(6, func() (linear.System, error) { return s.Multiply(1, 10) }, linear.NewSystem(p1, p1_2, p2_2, p3))
+	s = test(7, func() (linear.System, error) { return s.Add(0, 1, 0) }, linear.NewSystem(p1, p1_2, p2_2, p3))
+	p1_3 := linear.NewLine(linear.NewVector(10, 11, 10), 12)
+	s = test(8, func() (linear.System, error) { return s.Add(0, 1, 1) }, linear.NewSystem(p1, p1_3, p2_2, p3))
+	p0_1 := linear.NewLine(linear.NewVector(-10, -10, -10), -10)
+	s = test(9, func() (linear.System, error) { return s.Add(1, 0, -1) }, linear.NewSystem(p0_1, p1_3, p2_2, p3))
+	fmt.Println("quiz 9 complete...")
+}
+
+func test(number int, operation func() (linear.System, error), expected linear.System) linear.System {
+	s, err := operation()
+	if err != nil {
+		fmt.Printf("test case %d failed to swap\n", number)
+	}
+	eq, err := s.Eq(expected)
+	if !eq {
+		fmt.Printf("test case %d failed expected to be equal, but wasn't\n", number)
+	}
+	if err != nil {
+		fmt.Printf("test case %d failed to compare with %v\n", number, err)
+	}
+	return s
 }

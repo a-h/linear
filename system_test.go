@@ -320,7 +320,7 @@ func TestSystemAddFunction(t *testing.T) {
 		input                System
 		addIndex             int
 		toIndex              int
-		times                int
+		coefficient          int
 		expected             System
 		expectedErrorMessage string
 	}{
@@ -331,9 +331,9 @@ func TestSystemAddFunction(t *testing.T) {
 				NewLine(NewVector(0, 1, 0), 2),
 				NewLine(NewVector(1, 1, -1), 3),
 				NewLine(NewVector(1, 0, -2), 2)),
-			addIndex: 0,
-			toIndex:  1,
-			times:    1,
+			addIndex:    0,
+			toIndex:     1,
+			coefficient: 1,
 			expected: NewSystem(
 				NewLine(NewVector(1, 1, 1), 1),
 				NewLine(NewVector(1, 2, 1), 3),
@@ -347,9 +347,9 @@ func TestSystemAddFunction(t *testing.T) {
 				NewLine(NewVector(0, 1, 0), 2),
 				NewLine(NewVector(1, 1, -1), 3),
 				NewLine(NewVector(1, 0, -2), 2)),
-			addIndex: 0,
-			toIndex:  2,
-			times:    3,
+			addIndex:    0,
+			toIndex:     2,
+			coefficient: 3,
 			expected: NewSystem(
 				NewLine(NewVector(1, 1, 1), 1),
 				NewLine(NewVector(0, 1, 0), 2),
@@ -365,7 +365,7 @@ func TestSystemAddFunction(t *testing.T) {
 				NewLine(NewVector(1, 0, -2), 2)),
 			addIndex:             -1,
 			toIndex:              2,
-			times:                3,
+			coefficient:          3,
 			expectedErrorMessage: "source index -1 is not present in the system",
 		},
 		{
@@ -377,7 +377,7 @@ func TestSystemAddFunction(t *testing.T) {
 				NewLine(NewVector(1, 0, -2), 2)),
 			addIndex:             0,
 			toIndex:              10,
-			times:                3,
+			coefficient:          3,
 			expectedErrorMessage: "destination index 10 is not present in the system",
 		},
 		{
@@ -389,40 +389,9 @@ func TestSystemAddFunction(t *testing.T) {
 				NewLine(NewVector(1, 0, -2), 2)),
 			addIndex:             0,
 			toIndex:              1,
-			times:                2,
+			coefficient:          2,
 			expectedErrorMessage: "cannot add vectors together because they have different dimensions (3 and 2)",
 		},
-	}
-
-	for _, test := range tests {
-		actual, err := test.input.Add(test.addIndex, test.toIndex, test.times)
-		if err != nil {
-			if test.expectedErrorMessage == "" || !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
-				t.Errorf("%s: unexpected error adding index %d to index %d %d times: %v\n", test.name, test.addIndex, test.toIndex, test.times, err)
-			}
-			continue
-		}
-
-		eq, err := actual.Eq(test.expected)
-		if err != nil && !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
-			t.Errorf("%s: unexpected error adding index %d to index %d %d times: %v\n", test.name, test.addIndex, test.toIndex, test.times, err)
-		}
-		if !eq {
-			t.Errorf("%s: expected %v, but got %v", test.name, test.expected, actual)
-		}
-	}
-}
-
-func TestSystemSubFunction(t *testing.T) {
-	tests := []struct {
-		name                 string
-		input                System
-		subtractIndex        int
-		fromIndex            int
-		times                int
-		expected             System
-		expectedErrorMessage string
-	}{
 		{
 			name: "subtract the first one from the second once",
 			input: NewSystem(
@@ -430,9 +399,9 @@ func TestSystemSubFunction(t *testing.T) {
 				NewLine(NewVector(0, 1, 0), 2),
 				NewLine(NewVector(1, 1, -1), 3),
 				NewLine(NewVector(1, 0, -2), 2)),
-			subtractIndex: 0,
-			fromIndex:     1,
-			times:         1,
+			addIndex:    0,
+			toIndex:     1,
+			coefficient: -1,
 			expected: NewSystem(
 				NewLine(NewVector(1, 1, 1), 1),
 				NewLine(NewVector(-1, 0, -1), 1),
@@ -446,65 +415,29 @@ func TestSystemSubFunction(t *testing.T) {
 				NewLine(NewVector(0, 1, 0), 2),
 				NewLine(NewVector(6, 5, 4), 3),
 				NewLine(NewVector(1, 0, -2), 2)),
-			subtractIndex: 0,
-			fromIndex:     2,
-			times:         3,
+			addIndex:    0,
+			toIndex:     2,
+			coefficient: -3,
 			expected: NewSystem(
 				NewLine(NewVector(3, 3, 3), 3),
 				NewLine(NewVector(0, 1, 0), 2),
 				NewLine(NewVector(3, 2, 1), 0),
 				NewLine(NewVector(1, 0, -2), 2)),
 		},
-		{
-			name: "source out of range",
-			input: NewSystem(
-				NewLine(NewVector(1, 1, 1), 1),
-				NewLine(NewVector(0, 1, 0), 2),
-				NewLine(NewVector(1, 1, -1), 3),
-				NewLine(NewVector(1, 0, -2), 2)),
-			subtractIndex:        -1,
-			fromIndex:            2,
-			times:                3,
-			expectedErrorMessage: "source index -1 is not present in the system",
-		},
-		{
-			name: "destination out of range",
-			input: NewSystem(
-				NewLine(NewVector(1, 1, 1), 1),
-				NewLine(NewVector(0, 1, 0), 2),
-				NewLine(NewVector(1, 1, -1), 3),
-				NewLine(NewVector(1, 0, -2), 2)),
-			subtractIndex:        0,
-			fromIndex:            10,
-			times:                3,
-			expectedErrorMessage: "destination index 10 is not present in the system",
-		},
-		{
-			name: "mismatched dimensions",
-			input: NewSystem(
-				NewLine(NewVector(1, 1), 1),
-				NewLine(NewVector(0, 1, 0), 2),
-				NewLine(NewVector(1, 1, -1), 3),
-				NewLine(NewVector(1, 0, -2), 2)),
-			subtractIndex:        0,
-			fromIndex:            1,
-			times:                2,
-			expectedErrorMessage: "cannot subtract vectors because they have different dimensions (3 and 2)",
-		},
 	}
 
 	for _, test := range tests {
-		actual, err := test.input.Sub(test.subtractIndex, test.fromIndex, test.times)
+		actual, err := test.input.Add(test.addIndex, test.toIndex, test.coefficient)
 		if err != nil {
 			if test.expectedErrorMessage == "" || !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
-				t.Errorf("%s: unexpected error subtracting index %d to index %d %d times: %v\n", test.name, test.subtractIndex, test.fromIndex, test.times, err)
+				t.Errorf("%s: unexpected error adding index %d * %d to index %d: %v\n", test.name, test.addIndex, test.coefficient, test.toIndex, err)
 			}
 			continue
 		}
 
 		eq, err := actual.Eq(test.expected)
 		if err != nil && !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
-			t.Errorf("%s: unexpected error subtracting index %d to index %d %d times: %v\n", test.name, test.subtractIndex, test.fromIndex, test.times, err)
+			t.Errorf("%s: unexpected error adding index %d * %d to index %d: %v\n", test.name, test.addIndex, test.coefficient, test.toIndex, err)
 		}
 		if !eq {
 			t.Errorf("%s: expected %v, but got %v", test.name, test.expected, actual)
