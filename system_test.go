@@ -496,3 +496,118 @@ func TestSystemFindFirstNonZeroCoefficientsFunction(t *testing.T) {
 		}
 	}
 }
+
+func TestSystemIsTriangularFormFunction(t *testing.T) {
+	tests := []struct {
+		name                 string
+		input                System
+		expected             bool
+		expectedErrorMessage string
+	}{
+		{
+			name: "opposite of triangular form",
+			input: NewSystem(
+				NewLine(NewVector(0, 0, 0), 1),
+				NewLine(NewVector(0, 1, 1), 2),
+				NewLine(NewVector(1, 1, 1), 3)),
+			expected: false,
+		},
+		{
+			name: "starts well, but the second item is incorrect",
+			input: NewSystem(
+				NewLine(NewVector(0, 1, 1), 1),
+				NewLine(NewVector(0, 0, 0), 2),
+				NewLine(NewVector(1, 1, 1), 3)),
+			expected: false,
+		},
+		{
+			name: "perfect",
+			input: NewSystem(
+				NewLine(NewVector(1, 1, 1), 1),
+				NewLine(NewVector(0, 1, 1), 2),
+				NewLine(NewVector(0, 0, 1), 3)),
+			expected: true,
+		},
+		{
+			name: "zeroes",
+			input: NewSystem(
+				NewLine(NewVector(1, 0, 0), 1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(0, 0, 1), 3)),
+			expected: true,
+		},
+		{
+			name: "mismatched term counts",
+			input: NewSystem(
+				NewLine(NewVector(0, 0), 1),
+				NewLine(NewVector(0, 1, 1), 2),
+				NewLine(NewVector(1, 1, 1), 3)),
+			expected:             false,
+			expectedErrorMessage: "all equations in a system need to have the same number of terms",
+		},
+	}
+
+	for _, test := range tests {
+		actual, err := test.input.IsTriangularForm()
+		if err != nil {
+			if test.expectedErrorMessage == "" || !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("%s: unexpected error: %v\n", test.name, err)
+			}
+			continue
+		}
+
+		if actual != test.expected {
+			t.Errorf("%s: expected %v, but got %v", test.name, test.expected, actual)
+		}
+	}
+}
+
+func TestSystemTriangularFormFunction(t *testing.T) {
+	tests := []struct {
+		name                 string
+		input                System
+		expected             System
+		expectedErrorMessage string
+	}{
+		{
+			name: "swap so that equations with non-zero coefficients are at the top (1)",
+			input: NewSystem(
+				NewLine(NewVector(0, 0, 0), 1),
+				NewLine(NewVector(0, 1, 1), 2),
+				NewLine(NewVector(1, 1, 1), 3)),
+			expected: NewSystem(
+				NewLine(NewVector(1, 1, 1), 3),
+				NewLine(NewVector(0, 1, 1), 2),
+				NewLine(NewVector(0, 0, 0), 1)),
+		},
+		{
+			name: "swap so that equations with non-zero coefficients are at the top (2)",
+			input: NewSystem(
+				NewLine(NewVector(0, 1, 1), 1),
+				NewLine(NewVector(0, 0, 0), 2),
+				NewLine(NewVector(1, 1, 1), 3)),
+			expected: NewSystem(
+				NewLine(NewVector(1, 1, 1), 3),
+				NewLine(NewVector(0, 1, 1), 1),
+				NewLine(NewVector(0, 0, 0), 2)),
+		},
+	}
+
+	for _, test := range tests {
+		actual, err := test.input.TriangularForm()
+		if err != nil {
+			if test.expectedErrorMessage == "" || !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("%s: unexpected error: %v\n", test.name, err)
+			}
+			continue
+		}
+
+		eq, err := actual.Eq(test.expected)
+		if err != nil && !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
+			t.Errorf("%s: unexpected error comparing %v and %v: %v\n", test.name, test.input, actual, err)
+		}
+		if !eq {
+			t.Errorf("%s: expected %v, but got %v", test.name, test.expected, actual)
+		}
+	}
+}

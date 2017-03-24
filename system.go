@@ -2,7 +2,11 @@ package linear
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"sort"
+
+	"github.com/a-h/linear/tolerance"
 )
 
 // System defines a system of equations, where each equation
@@ -111,4 +115,42 @@ func (s1 System) FindFirstNonZeroCoefficients() (indices []int, err error) {
 		indices[i] = idx
 	}
 	return indices, nil
+}
+
+// TriangularForm organises the system by leading term.
+func (s1 System) TriangularForm() (System, error) {
+	sort.Sort(NonZeroLeadingTerms(s1))
+	return s1, nil
+}
+
+// IsTriangularForm determines whether the system is in triangular form, where the top row starts with a non-zero
+// term, the next one down starts with a zero etc., the one after that starts with two zero terms etc.
+func (s1 System) IsTriangularForm() (bool, error) {
+	for i, e := range s1 {
+		if len(s1) != len(e.NormalVector) {
+			return false, errors.New("all equations in a system need to have the same number of terms")
+		}
+		if tolerance.IsWithin(e.NormalVector[i], 0, DefaultTolerance) {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+// NonZeroLeadingTerms sorts the system into triangular form, where the top row starts with the earliest non-zero
+// term, the next one down starts with a zero etc.
+type NonZeroLeadingTerms System
+
+func (tf NonZeroLeadingTerms) Len() int      { return len(tf) }
+func (tf NonZeroLeadingTerms) Swap(i, j int) { tf[i], tf[j] = tf[j], tf[i] }
+func (tf NonZeroLeadingTerms) Less(i, j int) bool {
+	fnz1, _, ok := tf[i].FirstNonZeroCoefficient()
+	if !ok {
+		fnz1 = len(tf[i].NormalVector)
+	}
+	fnz2, _, ok := tf[j].FirstNonZeroCoefficient()
+	if !ok {
+		fnz2 = len(tf[j].NormalVector)
+	}
+	return fnz1 < fnz2
 }

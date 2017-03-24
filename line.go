@@ -11,7 +11,7 @@ import (
 )
 
 // Line consists of a normal vector which specifies the direction, and a constant term.
-// The basepoint is calculated by the NewLine function.
+// The basepoint is calculated as required.
 type Line struct {
 	NormalVector Vector
 	ConstantTerm float64

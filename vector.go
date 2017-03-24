@@ -17,9 +17,6 @@ func NewVector(values ...float64) Vector {
 	return Vector(values)
 }
 
-// DefaultTolerance is the tolerance to use for comparisons.
-const DefaultTolerance = 1e-10
-
 func (v1 Vector) String() string {
 	if len(v1) == 1 {
 		return fmt.Sprintf("[%v]", v1[0])
