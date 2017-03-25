@@ -119,9 +119,31 @@ func (s1 System) FindFirstNonZeroCoefficients() (indices []int, err error) {
 
 // TriangularForm organises the system by leading term.
 func (s1 System) TriangularForm() (System, error) {
+	// Sort the output to avoid zero coefficients being at the top.
 	op := make(System, len(s1))
 	copy(op, s1)
 	sort.Sort(NonZeroLeadingTerms(op))
+
+	if !s1.AllEquationsHaveSameNumberOfTerms() {
+		return op, errors.New("all equations in a system need to have the same number of terms")
+	}
+
+	// Iterate through and elimate each term in order.
+	for i := 0; i < len(op)-1; i++ {
+		currentEquation := op[i]
+		if currentEquation.NormalVector.IsZeroVector() {
+			continue
+		}
+		// Apply the cancellation to all subsequent equations.
+		for j := i + 1; j < len(op); j++ {
+			nextEquation := op[j]
+			cancelled, err := currentEquation.CancelTerm(nextEquation, i)
+			if err != nil {
+				return op, err
+			}
+			op[j] = cancelled
+		}
+	}
 
 	return op, nil
 }
@@ -129,16 +151,32 @@ func (s1 System) TriangularForm() (System, error) {
 // IsTriangularForm determines whether the system is in triangular form, where the top row starts with a non-zero
 // term, the next one down starts with a zero etc., the one after that starts with two zero terms etc.
 func (s1 System) IsTriangularForm() (bool, error) {
-
+	if !s1.AllEquationsHaveSameNumberOfTerms() {
+		return false, errors.New("all equations in a system need to have the same number of terms")
+	}
 	for i, e := range s1 {
-		if len(s1) != len(e.NormalVector) {
-			return false, errors.New("all equations in a system need to have the same number of terms")
-		}
-		if tolerance.IsWithin(e.NormalVector[i], 0, DefaultTolerance) {
-			return false, nil
+		for j := 0; j < i; j++ {
+			if !tolerance.IsWithin(e.NormalVector[j], 0, DefaultTolerance) {
+				return false, nil
+			}
 		}
 	}
 	return true, nil
+}
+
+// AllEquationsHaveSameNumberOfTerms returns true when all equations in the system have the same number of terms.
+func (s1 System) AllEquationsHaveSameNumberOfTerms() bool {
+	var length int
+	for i, e := range s1 {
+		if i == 0 {
+			length = len(e.NormalVector)
+			continue
+		}
+		if length != len(e.NormalVector) {
+			return false
+		}
+	}
+	return true
 }
 
 // NonZeroLeadingTerms sorts the system into triangular form, where the top row starts with the earliest non-zero

@@ -467,9 +467,7 @@ func TestSystemFindFirstNonZeroCoefficientsFunction(t *testing.T) {
 			expected: []int{0, 1, 0, 0},
 		},
 		{
-			input: NewSystem(
-				NewLine(NewVector(0, 0, 0), 1)),
-			expected:             []int{0},
+			input:                NewSystem(NewLine(NewVector(0, 0, 0), 1)),
 			expectedErrorMessage: "failed to find a non-zero coefficient for equation at index 0",
 		},
 		{
@@ -537,6 +535,14 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "already triangular",
+			input: NewSystem(
+				NewLine(NewVector(5, 4, -1), 0),
+				NewLine(NewVector(0, 10, 3), 11),
+				NewLine(NewVector(0, 0, 3), 3)),
+			expected: true,
+		},
+		{
 			name: "mismatched term counts",
 			input: NewSystem(
 				NewLine(NewVector(0, 0), 1),
@@ -544,6 +550,31 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(1, 1, 1), 3)),
 			expected:             false,
 			expectedErrorMessage: "all equations in a system need to have the same number of terms",
+		},
+		{
+			name: "more terms than equations",
+			input: NewSystem(
+				NewLine(NewVector(0, 0, 1, 1), 1),
+				NewLine(NewVector(0, 1, 1, 1), 2),
+				NewLine(NewVector(1, 1, 1, 1), 3)),
+			expected:             false,
+			expectedErrorMessage: "the number of terms in each equation needs to match the number of terms in the system",
+		},
+		{
+			name: "more equations than terms",
+			input: NewSystem(
+				NewLine(NewVector(1, 2), 1),
+				NewLine(NewVector(0, 0), 1),
+				NewLine(NewVector(0, 0), 2)),
+			expected: true,
+		},
+		{
+			name: "zeroes in all the right places, but it's not triangular form",
+			input: NewSystem(
+				NewLine(NewVector(1, 1, 1, 1), 1),
+				NewLine(NewVector(1, 0, 1, 1), 2),
+				NewLine(NewVector(1, 1, 0, 1), 3)),
+			expected: false,
 		},
 	}
 
@@ -590,6 +621,47 @@ func TestSystemTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(1, 1, 1), 3),
 				NewLine(NewVector(0, 1, 1), 1),
 				NewLine(NewVector(0, 0, 0), 2)),
+		},
+		{
+			name: "no changes needed, it's already triangular",
+			input: NewSystem(
+				NewLine(NewVector(5, 4, -1), 0),
+				NewLine(NewVector(0, 10, 3), 11),
+				NewLine(NewVector(0, 0, 3), 3)),
+			expected: NewSystem(
+				NewLine(NewVector(5, 4, -1), 0),
+				NewLine(NewVector(0, 10, 3), 11),
+				NewLine(NewVector(0, 0, 3), 3)),
+		},
+		{
+			name: "elimination",
+			input: NewSystem(
+				NewLine(NewVector(1, 1, 1), 1),
+				NewLine(NewVector(1, 2, 2), 2),
+				NewLine(NewVector(1, 2, 3), 3)),
+			expected: NewSystem(
+				NewLine(NewVector(1, 1, 1), 1),
+				NewLine(NewVector(0, 1, 1), 1),
+				NewLine(NewVector(0, 0, 1), 1)),
+		},
+		{
+			name: "mismatched term count",
+			input: NewSystem(
+				NewLine(NewVector(1, 1, 1), 1),
+				NewLine(NewVector(1, 2), 2),
+				NewLine(NewVector(1, 2, 3), 3)),
+			expectedErrorMessage: "all equations in a system need to have the same number of terms",
+		},
+		{
+			name: "more equations than terms",
+			input: NewSystem(
+				NewLine(NewVector(1, 2), 1),
+				NewLine(NewVector(1, 2), 2),
+				NewLine(NewVector(1, 2), 3)),
+			expected: NewSystem(
+				NewLine(NewVector(1, 2), 1),
+				NewLine(NewVector(0, 0), 1),
+				NewLine(NewVector(0, 0), 2)),
 		},
 	}
 

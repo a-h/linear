@@ -295,7 +295,7 @@ func quiz9() { // Coding row operations
 func test(number int, operation func() (linear.System, error), expected linear.System) linear.System {
 	s, err := operation()
 	if err != nil {
-		fmt.Printf("test case %d failed to swap\n", number)
+		fmt.Printf("test case %d failed with err: %v\n", number, err)
 	}
 	eq, err := s.Eq(expected)
 	if !eq {
