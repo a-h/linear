@@ -426,3 +426,82 @@ func TestNonZeroValuePointFunction(t *testing.T) {
 		}
 	}
 }
+
+func TestEquationCancelFunction(t *testing.T) {
+	tests := []struct {
+		name                 string
+		src                  Line
+		dst                  Line
+		termIndex            int
+		expected             Line
+		expectedErrorMessage string
+	}{
+		{
+			name:      "add -2 of the 1st equation to the 2nd to cancel",
+			src:       NewLine(NewVector(1, 1, 1), 1),
+			dst:       NewLine(NewVector(2, 1, 1), 1),
+			termIndex: 0,
+			expected:  NewLine(NewVector(0, -1, -1), -1),
+		},
+		{
+			name:      "add +1 of the 1st equation to the 2nd to cancel",
+			src:       NewLine(NewVector(-1, 1, 1), 1),
+			dst:       NewLine(NewVector(1, 1, 1), 1),
+			termIndex: 0,
+			expected:  NewLine(NewVector(0, 2, 2), 2),
+		},
+		{
+			name:      "add *3 of the 1st equation to the 2nd to cancel",
+			src:       NewLine(NewVector(-1, 1, 1), 1),
+			dst:       NewLine(NewVector(3, 3, 3), 0),
+			termIndex: 0,
+			expected:  NewLine(NewVector(0, 6, 6), 3),
+		},
+		{
+			name:      "add *3 of the 1st equation to the 2nd to cancel, second term",
+			src:       NewLine(NewVector(1, -1, 1), 1),
+			dst:       NewLine(NewVector(3, 3, 3), 0),
+			termIndex: 1,
+			expected:  NewLine(NewVector(6, 0, 6), 3),
+		},
+		{
+			name:                 "term out of range, first line",
+			src:                  NewLine(NewVector(1, -1, 1), 1),
+			dst:                  NewLine(NewVector(3, 3, 3), 0),
+			termIndex:            4,
+			expectedErrorMessage: "term index 4 is not present in l1",
+		},
+		{
+			name:                 "term out of range, second line",
+			src:                  NewLine(NewVector(1, -1, 1), 1),
+			dst:                  NewLine(NewVector(3, 3), 0),
+			termIndex:            2,
+			expectedErrorMessage: "term index 2 is not present in the target line",
+		},
+		{
+			name:                 "mismatched term lengths",
+			src:                  NewLine(NewVector(1), 1),
+			dst:                  NewLine(NewVector(3, 3), 0),
+			termIndex:            0,
+			expectedErrorMessage: "cannot add vectors together",
+		},
+	}
+
+	for _, test := range tests {
+		actual, err := test.src.CancelTerm(test.dst, test.termIndex)
+		if err != nil {
+			if test.expectedErrorMessage == "" || !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("%s: unexpected error: %v\n", test.name, err)
+			}
+			continue
+		}
+
+		eq, err := actual.Eq(test.expected)
+		if err != nil && !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
+			t.Errorf("%s: unexpected error comparing %v and %v: %v\n", test.name, test.expected, actual, err)
+		}
+		if !eq {
+			t.Errorf("%s: expected %v, but got %v", test.name, test.expected, actual)
+		}
+	}
+}

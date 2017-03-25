@@ -119,13 +119,17 @@ func (s1 System) FindFirstNonZeroCoefficients() (indices []int, err error) {
 
 // TriangularForm organises the system by leading term.
 func (s1 System) TriangularForm() (System, error) {
-	sort.Sort(NonZeroLeadingTerms(s1))
-	return s1, nil
+	op := make(System, len(s1))
+	copy(op, s1)
+	sort.Sort(NonZeroLeadingTerms(op))
+
+	return op, nil
 }
 
 // IsTriangularForm determines whether the system is in triangular form, where the top row starts with a non-zero
 // term, the next one down starts with a zero etc., the one after that starts with two zero terms etc.
 func (s1 System) IsTriangularForm() (bool, error) {
+
 	for i, e := range s1 {
 		if len(s1) != len(e.NormalVector) {
 			return false, errors.New("all equations in a system need to have the same number of terms")

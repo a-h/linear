@@ -246,3 +246,31 @@ func (l1 Line) IntersectionWith(l2 Line) (intersection Vector, intersects bool, 
 	y := (c - (a * x)) / b
 	return NewVector(x, y), true, false, nil
 }
+
+// CancelTerm cancels a term in the target line by determining the coefficient which links them
+// and applying the first term to the second term to cancel them out.
+func (l1 Line) CancelTerm(target Line, termIndex int) (Line, error) {
+	if termIndex >= len(l1.NormalVector) || termIndex < 0 {
+		return Line{}, fmt.Errorf("term index %d is not present in l1", termIndex)
+	}
+
+	if termIndex >= len(target.NormalVector) || termIndex < 0 {
+		return Line{}, fmt.Errorf("term index %d is not present in the target line", termIndex)
+	}
+
+	srcCoefficient := l1.NormalVector[termIndex]
+	dstCoefficient := target.NormalVector[termIndex]
+
+	factor := dstCoefficient / -srcCoefficient
+
+	// Multiply by the difference between them.
+	multipliedVector := l1.NormalVector.Scale(factor)
+	multipliedConstant := l1.ConstantTerm * factor
+
+	outputVector, err := target.NormalVector.Add(multipliedVector)
+	if err != nil {
+		return Line{}, err
+	}
+	outputConstant := target.ConstantTerm + multipliedConstant
+	return NewLine(outputVector, outputConstant), nil
+}
