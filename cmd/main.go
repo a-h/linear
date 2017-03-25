@@ -31,6 +31,8 @@ func main() {
 		quiz8()
 	case 9:
 		quiz9()
+	case 10:
+		quiz10()
 	default:
 		fmt.Println("Quiz not found.")
 	}
@@ -303,4 +305,33 @@ func test(number int, operation func() (linear.System, error), expected linear.S
 		fmt.Printf("test case %d failed to compare with %v\n", number, err)
 	}
 	return s
+}
+
+func quiz10() { // Triangular form
+	p1 := linear.NewLine(linear.NewVector(1, 1, 1), 1)
+	p2 := linear.NewLine(linear.NewVector(0, 1, 1), 2)
+	s := linear.NewSystem(p1, p2)
+	test(1, func() (linear.System, error) { return s.TriangularForm() }, linear.NewSystem(p1, p2))
+
+	p1 = linear.NewLine(linear.NewVector(1, 1, 1), 1)
+	p2 = linear.NewLine(linear.NewVector(1, 1, 1), 2)
+	s = linear.NewSystem(p1, p2)
+	test(2, func() (linear.System, error) { return s.TriangularForm() }, linear.NewSystem(p1, p2))
+
+	p1 = linear.NewLine(linear.NewVector(1, 1, 1), 1)
+	p2 = linear.NewLine(linear.NewVector(0, 1, 0), 2)
+	p3 := linear.NewLine(linear.NewVector(1, 1, -1), 3)
+	p4 := linear.NewLine(linear.NewVector(1, 0, -2), 2)
+	s = linear.NewSystem(p1, p2, p3, p4)
+	expected := linear.NewSystem(p1, p2, linear.NewLine(linear.NewVector(0, 0, -2), 2), linear.NewLine(linear.NewVector(), 0))
+	test(3, func() (linear.System, error) { return s.TriangularForm() }, expected)
+
+	p1 = linear.NewLine(linear.NewVector(0, 1, 1), 1)
+	p2 = linear.NewLine(linear.NewVector(1, -1, 1), 2)
+	p3 = linear.NewLine(linear.NewVector(1, 2, -5), 3)
+	s = linear.NewSystem(p1, p2, p3)
+	expected = linear.NewSystem(linear.NewLine(linear.NewVector(1, -1, 1), 2),
+		linear.NewLine(linear.NewVector(0, 1, 1), 1),
+		linear.NewLine(linear.NewVector(0, 0, -9), -2))
+	test(4, func() (linear.System, error) { return s.TriangularForm() }, expected)
 }
