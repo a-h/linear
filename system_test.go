@@ -653,7 +653,7 @@ func TestSystemTriangularFormFunction(t *testing.T) {
 			expectedErrorMessage: "all equations in a system need to have the same number of terms",
 		},
 		{
-			name: "more equations than terms",
+			name: "coefficients cancel, constant term is different",
 			input: NewSystem(
 				NewLine(NewVector(1, 2), 1),
 				NewLine(NewVector(1, 2), 2),

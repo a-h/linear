@@ -485,6 +485,13 @@ func TestEquationCancelFunction(t *testing.T) {
 			termIndex:            0,
 			expectedErrorMessage: "cannot add vectors together",
 		},
+		{
+			name:                 "try and cancel with zero coefficient",
+			src:                  NewLine(NewVector(0), 1),
+			dst:                  NewLine(NewVector(1), 2),
+			termIndex:            0,
+			expectedErrorMessage: "the source line 0x₁ = 1 has a zero coefficient for term index 0, so can't be used to clear that term from 1x₁ = 2",
+		},
 	}
 
 	for _, test := range tests {

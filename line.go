@@ -261,6 +261,10 @@ func (l1 Line) CancelTerm(target Line, termIndex int) (Line, error) {
 	srcCoefficient := l1.NormalVector[termIndex]
 	dstCoefficient := target.NormalVector[termIndex]
 
+	if tolerance.IsWithin(srcCoefficient, 0, DefaultTolerance) {
+		return target, fmt.Errorf("the source line %v has a zero coefficient for term index %d, so can't be used to clear that term from %v", l1, termIndex, target)
+	}
+
 	factor := dstCoefficient / -srcCoefficient
 
 	// Multiply by the difference between them.

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"sort"
 
 	"github.com/a-h/linear/tolerance"
 )
@@ -119,30 +118,42 @@ func (s1 System) FindFirstNonZeroCoefficients() (indices []int, err error) {
 
 // TriangularForm organises the system by leading term.
 func (s1 System) TriangularForm() (System, error) {
-	// Sort the output to avoid zero coefficients being at the top.
-	op := make(System, len(s1))
-	copy(op, s1)
-	sort.Sort(NonZeroLeadingTerms(op))
+	// Copy the input to a new value.
+	op := s1
 
 	if !s1.AllEquationsHaveSameNumberOfTerms() {
 		return op, errors.New("all equations in a system need to have the same number of terms")
 	}
 
 	// Iterate through and elimate each term in order.
+	var termIndex int
 	for i := 0; i < len(op)-1; i++ {
-		currentEquation := op[i]
-		if currentEquation.NormalVector.IsZeroVector() {
-			continue
-		}
-		// Apply the cancellation to all subsequent equations.
-		for j := i + 1; j < len(op); j++ {
-			nextEquation := op[j]
-			cancelled, err := currentEquation.CancelTerm(nextEquation, i)
-			if err != nil {
-				return op, err
+		currentCoefficient := op[i].NormalVector[termIndex]
+		if tolerance.IsWithin(currentCoefficient, 0, DefaultTolerance) {
+			// Swap the current equation with the first one below it that has a non-zero coefficient for the term.
+			for j := i + 1; j < len(op); j++ {
+				nextEquation := op[j].NormalVector
+				nextCoefficient := nextEquation[termIndex]
+
+				if !tolerance.IsWithin(nextCoefficient, 0, DefaultTolerance) {
+					op, _ = op.Swap(i, j)
+					break
+				}
 			}
-			op[j] = cancelled
 		}
+
+		// Apply the cancellation to all subsequent equations.
+		currentEquation := op[i]
+		currentCoefficient = currentEquation.NormalVector[termIndex]
+		if !tolerance.IsWithin(currentCoefficient, 0, DefaultTolerance) {
+			for j := i + 1; j < len(op); j++ {
+				nextEquation := op[j]
+				// No need to capture the error, the only possible error is mismatched or out-of-band terms
+				// This is tested for in AllEquationsHaveSameNumberOfTerms above.
+				op[j], _ = currentEquation.CancelTerm(nextEquation, termIndex)
+			}
+		}
+		termIndex++
 	}
 
 	return op, nil
@@ -177,22 +188,4 @@ func (s1 System) AllEquationsHaveSameNumberOfTerms() bool {
 		}
 	}
 	return true
-}
-
-// NonZeroLeadingTerms sorts the system into triangular form, where the top row starts with the earliest non-zero
-// term, the next one down starts with a zero etc.
-type NonZeroLeadingTerms System
-
-func (tf NonZeroLeadingTerms) Len() int      { return len(tf) }
-func (tf NonZeroLeadingTerms) Swap(i, j int) { tf[i], tf[j] = tf[j], tf[i] }
-func (tf NonZeroLeadingTerms) Less(i, j int) bool {
-	fnz1, _, ok := tf[i].FirstNonZeroCoefficient()
-	if !ok {
-		fnz1 = len(tf[i].NormalVector)
-	}
-	fnz2, _, ok := tf[j].FirstNonZeroCoefficient()
-	if !ok {
-		fnz2 = len(tf[j].NormalVector)
-	}
-	return fnz1 < fnz2
 }

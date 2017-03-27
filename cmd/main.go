@@ -293,18 +293,18 @@ func quiz9() { // Coding row operations
 }
 
 func test(number int, operation func() (linear.System, error), expected linear.System) linear.System {
-	s, err := operation()
+	actual, err := operation()
 	if err != nil {
 		fmt.Printf("test case %d failed with err: %v\n", number, err)
 	}
-	eq, err := s.Eq(expected)
+	eq, err := actual.Eq(expected)
 	if !eq {
-		fmt.Printf("test case %d failed expected to be equal, but wasn't\n", number)
+		fmt.Printf("test case %d failed expected %v, but got %v\n", number, expected, actual)
 	}
 	if err != nil {
 		fmt.Printf("test case %d failed to compare with %v\n", number, err)
 	}
-	return s
+	return actual
 }
 
 func quiz10() { // Triangular form
@@ -316,7 +316,7 @@ func quiz10() { // Triangular form
 	p1 = linear.NewLine(linear.NewVector(1, 1, 1), 1)
 	p2 = linear.NewLine(linear.NewVector(1, 1, 1), 2)
 	s = linear.NewSystem(p1, p2)
-	test(2, func() (linear.System, error) { return s.TriangularForm() }, linear.NewSystem(p1, p2))
+	test(2, func() (linear.System, error) { return s.TriangularForm() }, linear.NewSystem(p1, linear.NewLine(linear.NewVector(0, 0, 0), 1)))
 
 	p1 = linear.NewLine(linear.NewVector(1, 1, 1), 1)
 	p2 = linear.NewLine(linear.NewVector(0, 1, 0), 2)
