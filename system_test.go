@@ -576,6 +576,30 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(1, 1, 0, 1), 3)),
 			expected: false,
 		},
+		{
+			name: "system with zero coefficient for second row, second term",
+			input: NewSystem(
+				NewLine(NewVector(0, 1, 1), 1),
+				NewLine(NewVector(0, 0, 2), 2),
+				NewLine(NewVector(0, 0, 0), 3)),
+			expected: true,
+		},
+		{
+			name: "system with non-zero coefficient for second row, first term",
+			input: NewSystem(
+				NewLine(NewVector(0, 1, 1), 1),
+				NewLine(NewVector(1, 0, 2), 2),
+				NewLine(NewVector(0, 0, 0), 3)),
+			expected: false,
+		},
+		{
+			name: "system with no solution for third term",
+			input: NewSystem(
+				NewLine(NewVector(1, 1, 0), 1),
+				NewLine(NewVector(0, 2, 0), 2),
+				NewLine(NewVector(0, 0, 0), 3)),
+			expected: true,
+		},
 	}
 
 	for _, test := range tests {
@@ -662,6 +686,17 @@ func TestSystemTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(1, 2), 1),
 				NewLine(NewVector(0, 0), 1),
 				NewLine(NewVector(0, 0), 2)),
+		},
+		{
+			name: "system with no solution",
+			input: NewSystem(
+				NewLine(NewVector(1, 0, 1), 1),
+				NewLine(NewVector(1, 0, 1), 2),
+				NewLine(NewVector(1, 0, 1), 3)),
+			expected: NewSystem(
+				NewLine(NewVector(1, 0, 1), 1),
+				NewLine(NewVector(0, 0, 0), 1),
+				NewLine(NewVector(0, 0, 0), 2)),
 		},
 	}
 

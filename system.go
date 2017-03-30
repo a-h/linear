@@ -166,6 +166,7 @@ func (s1 System) IsTriangularForm() (bool, error) {
 		return false, errors.New("all equations in a system need to have the same number of terms")
 	}
 	for i, e := range s1 {
+		// Check that everything leading up to the current term is zero.
 		for j := 0; j < i; j++ {
 			if !tolerance.IsWithin(e.NormalVector[j], 0, DefaultTolerance) {
 				return false, nil
