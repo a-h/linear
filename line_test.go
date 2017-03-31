@@ -3,6 +3,8 @@ package linear
 import (
 	"strings"
 	"testing"
+
+	"github.com/a-h/linear/tolerance"
 )
 
 func TestSubscript(t *testing.T) {
@@ -509,6 +511,47 @@ func TestEquationCancelFunction(t *testing.T) {
 		}
 		if !eq {
 			t.Errorf("%s: expected %v, but got %v", test.name, test.expected, actual)
+		}
+	}
+}
+
+func TestLineScaleFunction(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    Line
+		scalar   float64
+		expected Line
+	}{
+		{
+			name:     "scale by 1 equals itself",
+			input:    NewLine(NewVector(1, 2, 3, 4), 5),
+			scalar:   float64(1.0),
+			expected: NewLine(NewVector(1, 2, 3, 4), 5),
+		},
+		{
+			name:     "scale by -1 inverts",
+			input:    NewLine(NewVector(1, 2, 3, 4), 5),
+			scalar:   float64(-1.0),
+			expected: NewLine(NewVector(-1, -2, -3, -4), -5),
+		},
+		{
+			name:     "scale by 2",
+			input:    NewLine(NewVector(1, 2, 3, 4), 5),
+			scalar:   float64(2.0),
+			expected: NewLine(NewVector(2, 4, 6, 8), 10),
+		},
+	}
+
+	for _, test := range tests {
+		actual := test.input.Scale(test.scalar)
+
+		vectorEqual := actual.NormalVector.Eq(test.expected.NormalVector)
+		if !vectorEqual {
+			t.Errorf("%s: scaling %v by %v - expected normal vector %v but got %v\n", test.name, test.input, test.scalar, test.expected.NormalVector, actual.NormalVector)
+		}
+
+		if !tolerance.IsWithin(test.expected.ConstantTerm, actual.ConstantTerm, DefaultTolerance) {
+			t.Errorf("%s: scaling %v by %v - expected constant term %v but got %v\n", test.name, test.input, test.scalar, test.expected.ConstantTerm, actual.ConstantTerm)
 		}
 	}
 }

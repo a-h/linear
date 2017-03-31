@@ -278,3 +278,8 @@ func (l1 Line) CancelTerm(target Line, termIndex int) (Line, error) {
 	outputConstant := target.ConstantTerm + multipliedConstant
 	return NewLine(outputVector, outputConstant), nil
 }
+
+// Scale scales the line by a scalar multiplier.
+func (l1 Line) Scale(scalar float64) Line {
+	return NewLine(l1.NormalVector.Scale(scalar), l1.ConstantTerm*scalar)
+}

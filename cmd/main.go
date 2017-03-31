@@ -33,6 +33,8 @@ func main() {
 		quiz9()
 	case 10:
 		quiz10()
+	case 11:
+		quiz11()
 	default:
 		fmt.Println("Quiz not found.")
 	}
@@ -334,4 +336,38 @@ func quiz10() { // Triangular form
 		linear.NewLine(linear.NewVector(0, 1, 1), 1),
 		linear.NewLine(linear.NewVector(0, 0, -9), -2))
 	test(4, func() (linear.System, error) { return s.TriangularForm() }, expected)
+}
+
+func quiz11() {
+	p1 := linear.NewLine(linear.NewVector(1, 1, 1), 1)
+	p2 := linear.NewLine(linear.NewVector(0, 1, 1), 2)
+	s := linear.NewSystem(p1, p2)
+	expected := linear.NewSystem(linear.NewLine(linear.NewVector(1, 0, 0), -1), p2)
+	test(1, func() (linear.System, error) { r, _, err := s.ComputeRREF(); return r, err }, expected)
+
+	p1 = linear.NewLine(linear.NewVector(1, 1, 1), 1)
+	p2 = linear.NewLine(linear.NewVector(1, 1, 1), 2)
+	s = linear.NewSystem(p1, p2)
+	expected = linear.NewSystem(p1, linear.NewLine(linear.NewVector(0, 0, 0), 1))
+	test(2, func() (linear.System, error) { r, _, err := s.ComputeRREF(); return r, err }, expected)
+
+	p1 = linear.NewLine(linear.NewVector(1, 1, 1), 1)
+	p2 = linear.NewLine(linear.NewVector(0, 1, 0), 2)
+	p3 := linear.NewLine(linear.NewVector(1, 1, -1), 3)
+	p4 := linear.NewLine(linear.NewVector(1, 0, -2), 2)
+	s = linear.NewSystem(p1, p2, p3, p4)
+	// See https://discussions.udacity.com/t/coding-rref-test-case-3/204986
+	expected = linear.NewSystem(linear.NewLine(linear.NewVector(1, 0, 0), 0), p2,
+		linear.NewLine(linear.NewVector(0, 0, 1), -1),
+		linear.NewLine(linear.NewVector(0, 0, 0), 0))
+	test(3, func() (linear.System, error) { r, _, err := s.ComputeRREF(); return r, err }, expected)
+
+	p1 = linear.NewLine(linear.NewVector(0, 1, 1), 1)
+	p2 = linear.NewLine(linear.NewVector(1, -1, 1), 2)
+	p3 = linear.NewLine(linear.NewVector(1, 2, -5), 3)
+	s = linear.NewSystem(p1, p2, p3)
+	expected = linear.NewSystem(linear.NewLine(linear.NewVector(1, 0, 0), 23.0/9.0),
+		linear.NewLine(linear.NewVector(0, 1, 0), 7.0/9.0),
+		linear.NewLine(linear.NewVector(0, 0, 1), 2.0/9.0))
+	test(4, func() (linear.System, error) { r, _, err := s.ComputeRREF(); return r, err }, expected)
 }

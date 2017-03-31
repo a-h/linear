@@ -698,6 +698,15 @@ func TestSystemTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(0, 0, 0), 1),
 				NewLine(NewVector(0, 0, 0), 2)),
 		},
+		{
+			name: "system with 3 variables and only two equations",
+			input: NewSystem(
+				NewLine(NewVector(1, 2, 3), 1),
+				NewLine(NewVector(0, 1, 2), 2)),
+			expected: NewSystem(
+				NewLine(NewVector(1, 2, 3), 1),
+				NewLine(NewVector(0, 1, 2), 2)),
+		},
 	}
 
 	for _, test := range tests {
@@ -714,6 +723,181 @@ func TestSystemTriangularFormFunction(t *testing.T) {
 			t.Errorf("%s: unexpected error comparing %v and %v: %v\n", test.name, test.input, actual, err)
 		}
 		if !eq {
+			t.Errorf("%s: expected %v, but got %v", test.name, test.expected, actual)
+		}
+	}
+}
+
+func TestSystemReducedRowEchelonFormFunction(t *testing.T) {
+	tests := []struct {
+		name                 string
+		input                System
+		expected             System
+		expectedSuccess      bool
+		expectedErrorMessage string
+	}{
+		{
+			name: "remove equation 2 from equation 1",
+			input: NewSystem(
+				NewLine(NewVector(0, 0, 0), 1),
+				NewLine(NewVector(0, 1, 1), 2),
+				NewLine(NewVector(1, 1, 1), 3)),
+			expected: NewSystem(
+				NewLine(NewVector(1, 0, 0), 1),
+				NewLine(NewVector(0, 1, 1), 2),
+				NewLine(NewVector(0, 0, 0), 1)),
+			expectedSuccess: false,
+		},
+		{
+			name: "mismatched term counts",
+			input: NewSystem(
+				NewLine(NewVector(0, 0), 1),
+				NewLine(NewVector(0, 1, 1), 2),
+				NewLine(NewVector(1, 1, 1), 3)),
+			expected: NewSystem(
+				NewLine(NewVector(1, 0, 0), 1),
+				NewLine(NewVector(0, 1, 1), 2),
+				NewLine(NewVector(0, 0, 0), 1)),
+			expectedSuccess:      false,
+			expectedErrorMessage: "all equations in a system need to have the same number of terms",
+		},
+		{
+			name: "perfect already",
+			input: NewSystem(
+				NewLine(NewVector(1, 0, 0), 1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(0, 0, 1), 3)),
+			expected: NewSystem(
+				NewLine(NewVector(1, 0, 0), 1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(0, 0, 1), 3)),
+			expectedSuccess: true,
+		},
+		{
+			name: "remove 3rd equation from the first to complete",
+			input: NewSystem(
+				NewLine(NewVector(1, 0, 1), 1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(0, 0, 1), 3)),
+			expected: NewSystem(
+				NewLine(NewVector(1, 0, 0), -2),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(0, 0, 1), 3)),
+			expectedSuccess: true,
+		},
+		{
+			name: "ensure terms become one",
+			input: NewSystem(
+				NewLine(NewVector(2, 0, 2), 2),
+				NewLine(NewVector(0, 2, 0), 2),
+				NewLine(NewVector(0, 0, 2), 3)),
+			expected: NewSystem(
+				NewLine(NewVector(1, 0, 0), -0.5),
+				NewLine(NewVector(0, 1, 0), 1),
+				NewLine(NewVector(0, 0, 1), 1.5)),
+			expectedSuccess: true,
+		},
+		{
+			name: "remove multiples",
+			input: NewSystem(
+				NewLine(NewVector(3, 1), 3),
+				NewLine(NewVector(0, 2), 2)),
+			expected: NewSystem(
+				NewLine(NewVector(1, 0), 2.0/3.0),
+				NewLine(NewVector(0, 1), 1)),
+			expectedSuccess: true,
+		},
+	}
+
+	for _, test := range tests {
+		actual, actualSuccess, err := test.input.ComputeRREF()
+		if err != nil {
+			if test.expectedErrorMessage == "" || !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("%s: unexpected error: %v\n", test.name, err)
+			}
+			continue
+		}
+		if actualSuccess != test.expectedSuccess {
+			t.Errorf("%s: expected success %v, but got %v\n", test.name, test.expectedSuccess, actualSuccess)
+		}
+
+		eq, err := actual.Eq(test.expected)
+		if err != nil && !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
+			t.Errorf("%s: unexpected error comparing %v and %v: %v\n", test.name, test.input, actual, err)
+		}
+		if !eq {
+			t.Errorf("%s: expected %v, but got %v", test.name, test.expected, actual)
+		}
+	}
+}
+
+func TestSystemIsReducedRowEchelonFormFunction(t *testing.T) {
+	tests := []struct {
+		name                 string
+		input                System
+		expected             bool
+		expectedErrorMessage string
+	}{
+		{
+			name: "not even triangular form",
+			input: NewSystem(
+				NewLine(NewVector(0, 0, 0), 1),
+				NewLine(NewVector(0, 1, 1), 2),
+				NewLine(NewVector(1, 1, 1), 3)),
+			expected: false,
+		},
+		{
+			name: "triangular form, but not RREF",
+			input: NewSystem(
+				NewLine(NewVector(1, 1, 1), 1),
+				NewLine(NewVector(0, 1, 1), 2),
+				NewLine(NewVector(1, 1, 1), 3)),
+			expected: false,
+		},
+		{
+			name: "mismatched terms in the system",
+			input: NewSystem(
+				NewLine(NewVector(1, 1, 1), 1),
+				NewLine(NewVector(0, 1, 1, 2), 2),
+				NewLine(NewVector(1, 1, 1), 3)),
+			expectedErrorMessage: "all equations in a system need to have the same number of terms",
+		},
+		{
+			name: "ideal case",
+			input: NewSystem(
+				NewLine(NewVector(1, 0, 0), 1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(0, 0, 1), 3)),
+			expected: true,
+		},
+		{
+			name: "each equation must only have one non-zero term",
+			input: NewSystem(
+				NewLine(NewVector(1, 0, 0), 1),
+				NewLine(NewVector(0, 1, 1), 2),
+				NewLine(NewVector(0, 0, 1), 3)),
+			expected: false,
+		},
+		{
+			name: "the leading term of each equation must be one",
+			input: NewSystem(
+				NewLine(NewVector(1, 0, 0), 1),
+				NewLine(NewVector(0, 2, 0), 2),
+				NewLine(NewVector(0, 0, 1), 3)),
+			expected: false,
+		},
+	}
+
+	for _, test := range tests {
+		actual, err := test.input.IsRREF()
+		if err != nil {
+			if test.expectedErrorMessage == "" || !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("%s: unexpected error: %v\n", test.name, err)
+			}
+			continue
+		}
+
+		if actual != test.expected {
 			t.Errorf("%s: expected %v, but got %v", test.name, test.expected, actual)
 		}
 	}

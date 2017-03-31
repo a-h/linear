@@ -73,8 +73,7 @@ func (s1 System) Multiply(index int, coefficient float64) (System, error) {
 	}
 
 	op := []Line(s1)
-	op[index].NormalVector = op[index].NormalVector.Scale(coefficient)
-	op[index].ConstantTerm *= coefficient
+	op[index] = op[index].Scale(coefficient)
 	return System(op), nil
 }
 
@@ -189,4 +188,75 @@ func (s1 System) AllEquationsHaveSameNumberOfTerms() bool {
 		}
 	}
 	return true
+}
+
+// ComputeRREF computes the Reduced Row Echelon Form of the system.
+func (s1 System) ComputeRREF() (s System, ok bool, err error) {
+	s, err = s1.TriangularForm()
+	if err != nil {
+		return s, false, err
+	}
+
+	var nonZeroTermIndices []int
+	if len(s1) > 0 {
+		nonZeroTermIndices = make([]int, len(s1[0].NormalVector))
+	}
+
+	// Iterate from bottom to top.
+	for i := len(s) - 1; i >= 0; i-- {
+		if s[i].NormalVector.IsZeroVector() {
+			// Nothing to solve, skip this line.
+			continue
+		}
+
+		// Make the leading term have a coefficient of one.
+		nonZeroTermIndex, v, _ := s[i].FirstNonZeroCoefficient()
+		nonZeroTermIndices[nonZeroTermIndex] = 1
+		coefficient := float64(1.0) / v
+		s[i] = s[i].Scale(coefficient)
+
+		// Cancel this term in the equations above this one.
+		for j := i - 1; j >= 0; j-- {
+			// No need to catch the error, we've already checked that the s[i] term is nonzero and that the
+			// equations have the same number of terms.
+			s[j], _ = s[i].CancelTerm(s[j], nonZeroTermIndex)
+		}
+	}
+	ok = all(nonZeroTermIndices, 1)
+	return s, ok, nil
+}
+
+func all(numbers []int, eq int) bool {
+	for _, v := range numbers {
+		if v != eq {
+			return false
+		}
+	}
+	return true
+}
+
+// IsRREF determines whether a system is in Reduced Row Echelon form.
+func (s1 System) IsRREF() (bool, error) {
+	isTriangular, err := s1.IsTriangularForm()
+	if !isTriangular || err != nil {
+		return isTriangular, err
+	}
+
+	for _, e := range s1 {
+		// Check that the value of the first non-zero term is one, then everything after is zero.
+		hadNonZeroTerm := false
+		for _, v := range e.NormalVector {
+			if !tolerance.IsWithin(v, 0, DefaultTolerance) {
+				if hadNonZeroTerm {
+					return false, nil
+				}
+				if !tolerance.IsWithin(v, 1, DefaultTolerance) {
+					// It's not RREF if there's a term that isn't one or zero.
+					return false, nil
+				}
+				hadNonZeroTerm = true
+			}
+		}
+	}
+	return true, nil
 }
