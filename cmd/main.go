@@ -35,6 +35,8 @@ func main() {
 		quiz10()
 	case 11:
 		quiz11()
+	case 12:
+		quiz12()
 	default:
 		fmt.Println("Quiz not found.")
 	}
@@ -338,7 +340,7 @@ func quiz10() { // Triangular form
 	test(4, func() (linear.System, error) { return s.TriangularForm() }, expected)
 }
 
-func quiz11() {
+func quiz11() { // Coding RREF.
 	p1 := linear.NewLine(linear.NewVector(1, 1, 1), 1)
 	p2 := linear.NewLine(linear.NewVector(0, 1, 1), 2)
 	s := linear.NewSystem(p1, p2)
@@ -370,4 +372,27 @@ func quiz11() {
 		linear.NewLine(linear.NewVector(0, 1, 0), 7.0/9.0),
 		linear.NewLine(linear.NewVector(0, 0, 1), 2.0/9.0))
 	test(4, func() (linear.System, error) { r, _, err := s.ComputeRREF(); return r, err }, expected)
+}
+
+func quiz12() { // Coding GE Solution
+	p1 := linear.NewLine(linear.NewVector(5.862, 1.178, -10.366), -8.15)
+	p2 := linear.NewLine(linear.NewVector(-2.931, -0.589, 5.183), -4.075)
+	s := linear.NewSystem(p1, p2)
+	solution, noSolution, infiniteSolutions, _ := s.Solve()
+	fmt.Printf("q1: Solution: %v No Solution: %v Infinite Solutions: %v\n", solution, noSolution, infiniteSolutions)
+
+	p1 = linear.NewLine(linear.NewVector(8.631, 5.112, -1.816), -5.113)
+	p2 = linear.NewLine(linear.NewVector(4.315, 11.132, -5.27), -6.775)
+	p3 := linear.NewLine(linear.NewVector(-2.158, 3.01, -1.727), -0.831)
+	s = linear.NewSystem(p1, p2, p3)
+	solution, noSolution, infiniteSolutions, _ = s.Solve()
+	fmt.Printf("q2: Solution: %v No Solution: %v Infinite Solutions: %v\n", solution, noSolution, infiniteSolutions)
+
+	p1 = linear.NewLine(linear.NewVector(5.262, 2.739, -9.878), -3.441)
+	p2 = linear.NewLine(linear.NewVector(5.111, 6.358, 7.638), -2.152)
+	p3 = linear.NewLine(linear.NewVector(2.016, -9.924, -1.367), -9.278)
+	p4 := linear.NewLine(linear.NewVector(2.167, -13.543, -18.883), -10.567)
+	s = linear.NewSystem(p1, p2, p3, p4)
+	solution, noSolution, infiniteSolutions, _ = s.Solve()
+	fmt.Printf("q4: Solution: %v No Solution: %v Infinite Solutions: %v\n", solution, noSolution, infiniteSolutions)
 }

@@ -300,8 +300,8 @@ func (s1 System) Solve() (solution Vector, noSolution bool, infiniteSolutions bo
 	if len(s) > 0 {
 		solutionVector = make([]float64, len(s[0].NormalVector))
 	}
-	for i, equation := range s {
-		solutionVector[i] = equation.ConstantTerm
+	for i := 0; i < len(solutionVector); i++ {
+		solutionVector[i] = s[i].ConstantTerm
 	}
 	return Vector(solutionVector), false, false, nil
 }
