@@ -807,6 +807,18 @@ func TestSystemReducedRowEchelonFormFunction(t *testing.T) {
 				NewLine(NewVector(0, 1), 1)),
 			expectedSuccess: true,
 		},
+		{
+			name: "not enough non-zero terms to be able to be in RREF",
+			input: NewSystem(
+				NewLine(NewVector(1, 0, 1), 1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(0, 1, 0), 2)),
+			expected: NewSystem(
+				NewLine(NewVector(1, 0, 1), 1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(0, 0, 0), 0)),
+			expectedSuccess: false,
+		},
 	}
 
 	for _, test := range tests {
