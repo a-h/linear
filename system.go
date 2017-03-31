@@ -190,16 +190,17 @@ func (s1 System) AllEquationsHaveSameNumberOfTerms() bool {
 	return true
 }
 
-// ComputeRREF computes the Reduced Row Echelon Form of the system.
+// ComputeRREF computes the Reduced Row Echelon Form of the system. ok returns
+// whether all of the terms in the equation have got a value.
 func (s1 System) ComputeRREF() (s System, ok bool, err error) {
 	s, err = s1.TriangularForm()
 	if err != nil {
 		return s, false, err
 	}
 
-	var nonZeroTermIndices []int
+	var termIndexIsNonZero []bool
 	if len(s1) > 0 {
-		nonZeroTermIndices = make([]int, len(s1[0].NormalVector))
+		termIndexIsNonZero = make([]bool, len(s1[0].NormalVector))
 	}
 
 	// Iterate from bottom to top.
@@ -211,7 +212,7 @@ func (s1 System) ComputeRREF() (s System, ok bool, err error) {
 
 		// Make the leading term have a coefficient of one.
 		nonZeroTermIndex, v, _ := s[i].FirstNonZeroCoefficient()
-		nonZeroTermIndices[nonZeroTermIndex] = 1
+		termIndexIsNonZero[nonZeroTermIndex] = true
 		coefficient := float64(1.0) / v
 		s[i] = s[i].Scale(coefficient)
 
@@ -222,13 +223,13 @@ func (s1 System) ComputeRREF() (s System, ok bool, err error) {
 			s[j], _ = s[i].CancelTerm(s[j], nonZeroTermIndex)
 		}
 	}
-	ok = all(nonZeroTermIndices, 1)
+	ok = allTrue(termIndexIsNonZero)
 	return s, ok, nil
 }
 
-func all(numbers []int, eq int) bool {
-	for _, v := range numbers {
-		if v != eq {
+func allTrue(bools []bool) bool {
+	for _, v := range bools {
+		if !v {
 			return false
 		}
 	}
@@ -242,10 +243,15 @@ func (s1 System) IsRREF() (bool, error) {
 		return isTriangular, err
 	}
 
+	var rowsWithNonZeroTerms []bool
+	if len(s1) > 0 {
+		rowsWithNonZeroTerms = make([]bool, len(s1[0].NormalVector))
+	}
+
 	for _, e := range s1 {
 		// Check that the value of the first non-zero term is one, then everything after is zero.
 		hadNonZeroTerm := false
-		for _, v := range e.NormalVector {
+		for termIndex, v := range e.NormalVector {
 			if !tolerance.IsWithin(v, 0, DefaultTolerance) {
 				if hadNonZeroTerm {
 					return false, nil
@@ -255,8 +261,47 @@ func (s1 System) IsRREF() (bool, error) {
 					return false, nil
 				}
 				hadNonZeroTerm = true
+				rowsWithNonZeroTerms[termIndex] = true
 			}
 		}
 	}
-	return true, nil
+	return allTrue(rowsWithNonZeroTerms), nil
+}
+
+// Solve solves the equation using Gaussian Elimination and returns whether the solution has
+// a single solution, no solutions, infinite solutions or can't be calculated due to an error.
+func (s1 System) Solve() (solution Vector, noSolution bool, infiniteSolutions bool, err error) {
+	s, allVariablesSet, err := s1.ComputeRREF()
+	if err != nil {
+		return solution, true, false, err
+	}
+
+	// Check whether we're in a 0=1 situation.
+	for _, equation := range s {
+		// First the first non-zero coefficient.
+		_, _, ok := equation.FirstNonZeroCoefficient()
+		// If we don't have a non-zero coefficient, and the constant term is not zero.
+		// Then we have a situation where 0 is not equal to zero, i.e. the equation is
+		// inconsistent.
+		if !ok && !tolerance.IsWithin(equation.ConstantTerm, 0, DefaultTolerance) {
+			// Return that we have no solution.
+			return solution, true, false, nil
+		}
+	}
+
+	if !allVariablesSet {
+		// We have a free variable, so we can generate infinite
+		// solutions by modifying the free variable(s).
+		return solution, false, true, nil
+	}
+
+	// We must have a single intersection.
+	var solutionVector []float64
+	if len(s) > 0 {
+		solutionVector = make([]float64, len(s[0].NormalVector))
+	}
+	for i, equation := range s {
+		solutionVector[i] = equation.ConstantTerm
+	}
+	return Vector(solutionVector), false, false, nil
 }

@@ -819,6 +819,16 @@ func TestSystemReducedRowEchelonFormFunction(t *testing.T) {
 				NewLine(NewVector(0, 0, 0), 0)),
 			expectedSuccess: false,
 		},
+		{
+			name: "parallel lines",
+			input: NewSystem(
+				NewLine(NewVector(1, 2), 18),
+				NewLine(NewVector(1, 2), 12)),
+			expected: NewSystem(
+				NewLine(NewVector(1, 2), 18),
+				NewLine(NewVector(0, 0), -6)),
+			expectedSuccess: false, // You can't solve parallel lines
+		},
 	}
 
 	for _, test := range tests {
@@ -898,6 +908,13 @@ func TestSystemIsReducedRowEchelonFormFunction(t *testing.T) {
 				NewLine(NewVector(0, 0, 1), 3)),
 			expected: false,
 		},
+		{
+			name: "parallel lines are in RREF",
+			input: NewSystem(
+				NewLine(NewVector(1, 0), 12),
+				NewLine(NewVector(0, 1), 18)),
+			expected: true,
+		},
 	}
 
 	for _, test := range tests {
@@ -911,6 +928,88 @@ func TestSystemIsReducedRowEchelonFormFunction(t *testing.T) {
 
 		if actual != test.expected {
 			t.Errorf("%s: expected %v, but got %v", test.name, test.expected, actual)
+		}
+	}
+}
+
+func TestSystemSolveFunction(t *testing.T) {
+	tests := []struct {
+		name                 string
+		input                System
+		noSolution           bool
+		hasInfiniteSolutions bool
+		expected             Vector
+		expectedErrorMessage string
+	}{
+		{
+			name: "already solved",
+			input: NewSystem(
+				NewLine(NewVector(1, 0, 0), 1),
+				NewLine(NewVector(0, 1, 0), 2),
+				NewLine(NewVector(0, 0, 1), 3)),
+			noSolution:           false,
+			hasInfiniteSolutions: false,
+			expected:             NewVector(1, 2, 3),
+		},
+		{
+			name: "requires solving, but simple",
+			input: NewSystem(
+				NewLine(NewVector(2, 0, 0), 2),
+				NewLine(NewVector(0, 2, 0), 4),
+				NewLine(NewVector(0, 0, 2), 6)),
+			noSolution:           false,
+			hasInfiniteSolutions: false,
+			expected:             NewVector(1, 2, 3), // Just everything divided by 2
+		},
+		{
+			name: "equal lines give infinite solutions",
+			input: NewSystem(
+				NewLine(NewVector(3, 2), 12),
+				NewLine(NewVector(3, 2), 12)),
+			noSolution:           false,
+			hasInfiniteSolutions: true,
+			expected:             NewVector(),
+		},
+		{
+			name: "all parallel lines, they'll never intersect",
+			input: NewSystem(
+				NewLine(NewVector(3, 2), 12),
+				NewLine(NewVector(3, 2), 18)),
+			noSolution:           true,
+			hasInfiniteSolutions: false,
+			expected:             NewVector(),
+		},
+		{
+			name: "mismatched terms triggers an error",
+			input: NewSystem(
+				NewLine(NewVector(3, 2), 12),
+				NewLine(NewVector(3, 2, 1), 18)),
+			noSolution:           false,
+			hasInfiniteSolutions: false,
+			expected:             NewVector(),
+			expectedErrorMessage: "all equations in a system need to have the same number of terms",
+		},
+	}
+
+	for _, test := range tests {
+		actualSolution, actualNoSolution, infiniteSolutions, err := test.input.Solve()
+		if err != nil {
+			if test.expectedErrorMessage == "" || !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("%s: unexpected error: %v\n", test.name, err)
+			}
+			continue
+		}
+
+		if actualNoSolution != test.noSolution {
+			t.Errorf("%s: expected noSolution: %v, but was %v", test.name, test.noSolution, actualNoSolution)
+		}
+
+		if infiniteSolutions != test.hasInfiniteSolutions {
+			t.Errorf("%s: expected infiniteSolutions: %v, but was %v", test.name, test.hasInfiniteSolutions, infiniteSolutions)
+		}
+
+		if !actualSolution.Eq(test.expected) {
+			t.Errorf("%s: expected %v, but got %v", test.name, test.expected, actualSolution)
 		}
 	}
 }
