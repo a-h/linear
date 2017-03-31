@@ -971,6 +971,15 @@ func TestSystemSolveFunction(t *testing.T) {
 			expected:             NewVector(),
 		},
 		{
+			name: "equal planes give infinite solutions",
+			input: NewSystem(
+				NewLine(NewVector(3, 2, 1), 12),
+				NewLine(NewVector(6, 4, 2), 24)),
+			noSolution:           false,
+			hasInfiniteSolutions: true,
+			expected:             NewVector(),
+		},
+		{
 			name: "all parallel lines, they'll never intersect",
 			input: NewSystem(
 				NewLine(NewVector(3, 2), 12),
