@@ -569,11 +569,19 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "zeroes in all the right places, but it's not triangular form",
+			name: "zeroes in all the right places. the leading term is index 0 for them all, so triangular form is faked",
 			input: NewSystem(
 				NewLine(NewVector(1, 1, 1, 1), 1),
 				NewLine(NewVector(1, 0, 1, 1), 2),
 				NewLine(NewVector(1, 1, 0, 1), 3)),
+			expected: true,
+		},
+		{
+			name: "zeroes in the right places, but the leading term is out of order",
+			input: NewSystem(
+				NewLine(NewVector(1, 1, 1, 1), 1),
+				NewLine(NewVector(0, 1, 1, 1), 2),
+				NewLine(NewVector(1, 0, 1, 1), 3)),
 			expected: false,
 		},
 		{
@@ -599,6 +607,30 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(0, 2, 0), 2),
 				NewLine(NewVector(0, 0, 0), 3)),
 			expected: true,
+		},
+		{
+			name: "it's OK to have multiple leading zeroes",
+			input: NewSystem(
+				NewLine(NewVector(1, 0, 0, 0), 1),
+				NewLine(NewVector(0, 0, 1, 0), 2),
+				NewLine(NewVector(0, 0, 0, 1), 3)),
+			expected: true,
+		},
+		{
+			name: "the leading term can be followed by anything",
+			input: NewSystem(
+				NewLine(NewVector(1, 5, 5, 5), 1),
+				NewLine(NewVector(0, 0, 1, 2), 2),
+				NewLine(NewVector(0, 0, 0, 1), 3)),
+			expected: true,
+		},
+		{
+			name: "equations with more variables must be at the top",
+			input: NewSystem(
+				NewLine(NewVector(0, 0, 0, 0), 1),
+				NewLine(NewVector(0, 0, 1, 2), 2),
+				NewLine(NewVector(0, 0, 0, 1), 3)),
+			expected: false,
 		},
 	}
 
@@ -915,6 +947,13 @@ func TestSystemIsReducedRowEchelonFormFunction(t *testing.T) {
 				NewLine(NewVector(0, 1), 18)),
 			expected: true,
 		},
+		{
+			name: "it's OK to have some coefficients with non-zero terms, it just means that there are infinite solutions",
+			input: NewSystem(
+				NewLine(NewVector(1, 0), 12),
+				NewLine(NewVector(0, 0), 18)),
+			expected: true,
+		},
 	}
 
 	for _, test := range tests {
@@ -1019,6 +1058,53 @@ func TestSystemSolveFunction(t *testing.T) {
 
 		if !actualSolution.Eq(test.expected) {
 			t.Errorf("%s: expected %v, but got %v", test.name, test.expected, actualSolution)
+		}
+	}
+}
+
+func TestSystemPivotIndices(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    System
+		expected []int
+	}{
+		{
+			name: "no pivots",
+			input: NewSystem(
+				NewLine(NewVector(0, 0, 0), 1),
+				NewLine(NewVector(0, 0, 0), 2),
+			),
+		},
+		{
+			name: "pivot at index 0, not at 1, or two",
+			input: NewSystem(
+				NewLine(NewVector(1, 0, 0), 1),
+				NewLine(NewVector(0, 0, 0), 2),
+			),
+			expected: []int{0},
+		},
+		{
+			name: "pivot at index 0, not at 1, or two (2)",
+			input: NewSystem(
+				NewLine(NewVector(0, 0, 0), 1),
+				NewLine(NewVector(1, 0, 0), 2),
+			),
+			expected: []int{0},
+		},
+		{
+			name: "no pivots because of multiple values",
+			input: NewSystem(
+				NewLine(NewVector(0, 1, 1), 1),
+				NewLine(NewVector(1, 0, 1), 2),
+			),
+		},
+	}
+
+	for _, test := range tests {
+		actual := test.input.PivotIndices()
+
+		if !reflect.DeepEqual(actual, test.expected) {
+			t.Errorf("%s: for %v expected %v, but got %v", test.name, test.input, test.expected, actual)
 		}
 	}
 }

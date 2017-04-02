@@ -160,17 +160,30 @@ func (s1 System) TriangularForm() (System, error) {
 
 // IsTriangularForm determines whether the system is in triangular form, where the top row starts with a non-zero
 // term, the next one down starts with a zero etc., the one after that starts with two zero terms etc.
-func (s1 System) IsTriangularForm() (bool, error) {
+func (s1 System) IsTriangularForm() (triangular bool, err error) {
 	if !s1.AllEquationsHaveSameNumberOfTerms() {
 		return false, errors.New("all equations in a system need to have the same number of terms")
 	}
-	for i, e := range s1 {
-		// Check that everything leading up to the current term is zero.
-		for j := 0; j < i; j++ {
-			if !tolerance.IsWithin(e.NormalVector[j], 0, DefaultTolerance) {
-				return false, nil
-			}
+	// Store the leftmost term for the system, i.e. the term that has had a non-zero value.
+	leftmostTerm := 0
+	alreadyHadZeroCoefficientEquation := false
+	for _, e := range s1 {
+		fnz, _, equationHasNonZeroCoefficient := e.FirstNonZeroCoefficient()
+		if alreadyHadZeroCoefficientEquation && equationHasNonZeroCoefficient {
+			return false, nil
 		}
+		if !equationHasNonZeroCoefficient {
+			alreadyHadZeroCoefficientEquation = true
+			continue
+		}
+		// Can't be in triangular form, because the system wasn't ordered with non-zero coefficients first, e.g.:
+		// 0, 1
+		// 1, 0
+		if fnz < leftmostTerm {
+			return false, nil
+		}
+		// Update the leftmostTerm and carry on.
+		leftmostTerm = fnz
 	}
 	return true, nil
 }
@@ -191,7 +204,8 @@ func (s1 System) AllEquationsHaveSameNumberOfTerms() bool {
 }
 
 // ComputeRREF computes the Reduced Row Echelon Form of the system. ok returns
-// whether all of the terms in the equation have got a value.
+// whether all of the terms in the equation have got a value (i.e. there is a
+// solution.)
 func (s1 System) ComputeRREF() (s System, ok bool, err error) {
 	s, err = s1.TriangularForm()
 	if err != nil {
@@ -243,29 +257,25 @@ func (s1 System) IsRREF() (bool, error) {
 		return isTriangular, err
 	}
 
-	var rowsWithNonZeroTerms []bool
-	if len(s1) > 0 {
-		rowsWithNonZeroTerms = make([]bool, len(s1[0].NormalVector))
-	}
-
+	// Wikipedia defines it as:
+	// all nonzero rows (rows with at least one nonzero element) are above any rows of all zeroes
+	//   (all zero rows, if any, belong at the bottom of the matrix), and
+	// the leading coefficient (the first nonzero number from the left, also called the pivot) of
+	//   a nonzero row is always strictly to the right of the leading coefficient of the row above
+	//   it (some texts add the condition that the leading coefficient must be 1[1]).
+	// These criteria are met by the IsTriangularForm function, except that:
+	//   the leading coefficient must be one, and each coefficient must only be defined once
+	// so let's check that.
 	for _, e := range s1 {
-		// Check that the value of the first non-zero term is one, then everything after is zero.
-		hadNonZeroTerm := false
-		for termIndex, v := range e.NormalVector {
-			if !tolerance.IsWithin(v, 0, DefaultTolerance) {
-				if hadNonZeroTerm {
-					return false, nil
-				}
-				if !tolerance.IsWithin(v, 1, DefaultTolerance) {
-					// It's not RREF if there's a term that isn't one or zero.
-					return false, nil
-				}
-				hadNonZeroTerm = true
-				rowsWithNonZeroTerms[termIndex] = true
-			}
+		if e.NormalVector.IsZeroVector() {
+			continue
+		}
+		_, hasPivot := e.PivotIndex()
+		if !hasPivot {
+			return false, nil
 		}
 	}
-	return allTrue(rowsWithNonZeroTerms), nil
+	return true, nil
 }
 
 // Solve solves the equation using Gaussian Elimination and returns whether the solution has
@@ -304,4 +314,17 @@ func (s1 System) Solve() (solution Vector, noSolution bool, infiniteSolutions bo
 		solutionVector[i] = s[i].ConstantTerm
 	}
 	return Vector(solutionVector), false, false, nil
+}
+
+// PivotIndices finds the coefficients in the system which have pivots.
+func (s1 System) PivotIndices() []int {
+	var indices []int
+	for _, e := range s1 {
+		i, ok := e.PivotIndex()
+		if !ok {
+			continue
+		}
+		indices = append(indices, i)
+	}
+	return indices
 }
