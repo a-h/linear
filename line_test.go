@@ -555,3 +555,57 @@ func TestLineScaleFunction(t *testing.T) {
 		}
 	}
 }
+
+func TestLinePivotIndex(t *testing.T) {
+	tests := []struct {
+		name               string
+		equation           Line
+		expectedPivotIndex int
+		expectedHasPivot   bool
+	}{
+		{
+			name:             "no pivot",
+			equation:         NewLine(NewVector(0, 0, 0), 1),
+			expectedHasPivot: false,
+		},
+		{
+			name:               "pivot at index 0",
+			equation:           NewLine(NewVector(1, 0, 0), 1),
+			expectedPivotIndex: 0,
+			expectedHasPivot:   true,
+		},
+		{
+			name:               "pivot at index 1",
+			equation:           NewLine(NewVector(0, 1, 0), 1),
+			expectedPivotIndex: 1,
+			expectedHasPivot:   true,
+		},
+		{
+			name:               "pivot at index 2",
+			equation:           NewLine(NewVector(0, 0, 1), 1),
+			expectedPivotIndex: 2,
+			expectedHasPivot:   true,
+		},
+		{
+			name:             "can't have two pivots",
+			equation:         NewLine(NewVector(1, 0, 1), 1),
+			expectedHasPivot: false,
+		},
+		{
+			name:             "the pivot needs to be 1",
+			equation:         NewLine(NewVector(2, 0, 0), 1),
+			expectedHasPivot: false,
+		},
+	}
+
+	for _, test := range tests {
+		actualPivotIndex, actualHasPivot := test.equation.PivotIndex()
+
+		if actualPivotIndex != test.expectedPivotIndex {
+			t.Errorf("%s: expected pivot index of %v, but got %v", test.name, test.expectedPivotIndex, actualPivotIndex)
+		}
+		if actualHasPivot != test.expectedHasPivot {
+			t.Errorf("%s: expected expectedHasPivot of %v, but got %v", test.name, test.expectedHasPivot, actualHasPivot)
+		}
+	}
+}

@@ -62,8 +62,7 @@ func (l1 Line) FirstNonZeroCoefficient() (index int, value float64, ok bool) {
 }
 
 func firstNonZeroElement(v Vector) (index int, value float64, ok bool) {
-	for i := 0; i < len(v); i++ {
-		value := v[i]
+	for i, value := range v {
 		if !tolerance.IsWithin(value, 0, DefaultTolerance) {
 			return i, value, true
 		}
@@ -282,4 +281,24 @@ func (l1 Line) CancelTerm(target Line, termIndex int) (Line, error) {
 // Scale scales the line by a scalar multiplier.
 func (l1 Line) Scale(scalar float64) Line {
 	return NewLine(l1.NormalVector.Scale(scalar), l1.ConstantTerm*scalar)
+}
+
+// PivotIndex returns the index where the first non-zero term is one, then everything after it is zero.
+func (l1 Line) PivotIndex() (index int, hasPivot bool) {
+	alreadyHadNonZeroTerm := false
+	for termIndex, v := range l1.NormalVector {
+		if !tolerance.IsWithin(v, 0, DefaultTolerance) {
+			if alreadyHadNonZeroTerm {
+				// Can't have a pivot if there are two non-zero coefficients.
+				return -1, false
+			}
+			if !tolerance.IsWithin(v, 1, DefaultTolerance) {
+				// It doesn't have a pivot, if there's a term that isn't one or zero.
+				return -1, false
+			}
+			alreadyHadNonZeroTerm = true
+			index = termIndex
+		}
+	}
+	return index, true
 }
