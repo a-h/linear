@@ -564,9 +564,10 @@ func TestLinePivotIndex(t *testing.T) {
 		expectedHasPivot   bool
 	}{
 		{
-			name:             "no pivot",
-			equation:         NewLine(NewVector(0, 0, 0), 1),
-			expectedHasPivot: false,
+			name:               "no pivot",
+			equation:           NewLine(NewVector(0, 0, 0), 1),
+			expectedPivotIndex: -1,
+			expectedHasPivot:   false,
 		},
 		{
 			name:               "pivot at index 0",
@@ -587,14 +588,16 @@ func TestLinePivotIndex(t *testing.T) {
 			expectedHasPivot:   true,
 		},
 		{
-			name:             "can't have two pivots",
-			equation:         NewLine(NewVector(1, 0, 1), 1),
-			expectedHasPivot: false,
+			name:               "can't have two pivots",
+			equation:           NewLine(NewVector(1, 0, 1), 1),
+			expectedPivotIndex: -1,
+			expectedHasPivot:   false,
 		},
 		{
-			name:             "the pivot needs to be 1",
-			equation:         NewLine(NewVector(2, 0, 0), 1),
-			expectedHasPivot: false,
+			name:               "the pivot needs to be 1",
+			equation:           NewLine(NewVector(2, 0, 0), 1),
+			expectedPivotIndex: -1,
+			expectedHasPivot:   false,
 		},
 	}
 

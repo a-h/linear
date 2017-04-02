@@ -300,5 +300,8 @@ func (l1 Line) PivotIndex() (index int, hasPivot bool) {
 			index = termIndex
 		}
 	}
+	if !alreadyHadNonZeroTerm {
+		return -1, false
+	}
 	return index, true
 }
