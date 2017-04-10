@@ -318,10 +318,7 @@ func (s1 System) Solve() (solution Vector, noSolution bool, infiniteSolutions bo
 // (the )
 func (s1 System) Parameterize() (Parameterization, error) {
 	if len(s1) == 0 {
-		return Parameterization{}, errors.New("a system cannot be parameterized if it it is empty")
-	}
-	if !s1.AllEquationsHaveSameNumberOfTerms() {
-		return Parameterization{}, errors.New("a system cannot be parameterized if not all equations have the same number of terms")
+		return Parameterization{}, errors.New("empty systems cannot be parameterized")
 	}
 	isRREF, err := s1.IsRREF()
 	if err != nil {
@@ -333,11 +330,8 @@ func (s1 System) Parameterize() (Parameterization, error) {
 
 	// Find free variables (coefficients which don't have a pivot variable).
 	// Find the indices of coefficients which _do_ have pivots.
-	fmt.Println("system", s1)
 	pivotIndices := s1.FindFirstNonZeroCoefficients()
-	fmt.Println("pivotIndices", pivotIndices)
 	pivotMap := convertPivotArrayToMap(pivotIndices)
-	fmt.Println("pivotMap", pivotMap)
 	// Then discard them.
 	var freeIndices []int
 	for i := 0; i < len(s1[0].NormalVector); i++ {
@@ -346,25 +340,20 @@ func (s1 System) Parameterize() (Parameterization, error) {
 			freeIndices = append(freeIndices, i)
 		}
 	}
-	fmt.Println("freeIndices", freeIndices)
 
 	// Now we know which indices are free, we can make a direction vector.
 	directionVectors := []Vector{}
 
 	dimensions := len(s1[0].NormalVector)
 	for _, freeIndex := range freeIndices {
-		fmt.Println("processing free index", freeIndex)
 		directionVector := Vector(make([]float64, dimensions))
 		directionVector[freeIndex] = 1
 		for i, p := range s1 {
-			fmt.Println("iterating through", p)
 			pivotVar := pivotIndices[i]
-			fmt.Println("pivotVar", pivotVar)
 			if pivotVar < 0 {
 				continue
 			}
 			directionVector[pivotVar] = -p.NormalVector[freeIndex]
-			fmt.Println(directionVector)
 		}
 		directionVectors = append(directionVectors, directionVector)
 	}

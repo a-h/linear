@@ -1114,6 +1114,37 @@ func TestSystemParameterizationFunction(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "the x coordinate is a free variable",
+			input: NewSystem(
+				NewLine(NewVector(0, 1, 0), 1),
+				NewLine(NewVector(0, 0, 1), 1)),
+			expected: Parameterization{
+				Basepoint: NewVector(0, 1, 1),
+				DirectionVectors: []Vector{
+					NewVector(1, 0, 0),
+				},
+			},
+		},
+		{
+			name: "input is not RREF because the leading coefficient is 2",
+			input: NewSystem(
+				NewLine(NewVector(0, 2, 0), 1),
+				NewLine(NewVector(0, 0, 1), 1)),
+			expectedErrorMessage: "the system is not in RREF form",
+		},
+		{
+			name:                 "empty systems can't be parameterized",
+			input:                NewSystem(),
+			expectedErrorMessage: "empty systems cannot be parameterized",
+		},
+		{
+			name: "equations in the system must all be in the same dimension",
+			input: NewSystem(
+				NewLine(NewVector(0, 2, 0), 1),
+				NewLine(NewVector(0, 0, 1, 4), 1)),
+			expectedErrorMessage: "all equations in a system need to have the same number of terms",
+		},
 	}
 
 	for _, test := range tests {
