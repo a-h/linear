@@ -447,9 +447,9 @@ func TestSystemAddFunction(t *testing.T) {
 
 func TestSystemFindFirstNonZeroCoefficientsFunction(t *testing.T) {
 	tests := []struct {
-		input                System
-		expected             []int
-		expectedErrorMessage string
+		input      System
+		expected   []int
+		expectedOK bool
 	}{
 		{
 			input: NewSystem(
@@ -467,8 +467,8 @@ func TestSystemFindFirstNonZeroCoefficientsFunction(t *testing.T) {
 			expected: []int{0, 1, 0, 0},
 		},
 		{
-			input:                NewSystem(NewLine(NewVector(0, 0, 0), 1)),
-			expectedErrorMessage: "failed to find a non-zero coefficient for equation at index 0",
+			input:    NewSystem(NewLine(NewVector(0, 0, 0), 1)),
+			expected: []int{-1},
 		},
 		{
 			input: NewSystem(
@@ -476,18 +476,12 @@ func TestSystemFindFirstNonZeroCoefficientsFunction(t *testing.T) {
 				NewLine(NewVector(0, 1, 0), 2),
 				NewLine(NewVector(0, 0, 0), 3),
 				NewLine(NewVector(1, 0, -2), 2)),
-			expectedErrorMessage: "failed to find a non-zero coefficient for equation at index 2",
+			expected: []int{0, 1, -1, 0},
 		},
 	}
 
 	for i, test := range tests {
-		actual, err := test.input.FindFirstNonZeroCoefficients()
-		if err != nil {
-			if test.expectedErrorMessage == "" || !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
-				t.Errorf("%d: unexpected error: %v\n", i, err)
-			}
-			continue
-		}
+		actual := test.input.FindFirstNonZeroCoefficients()
 
 		if !reflect.DeepEqual(actual, test.expected) {
 			t.Errorf("%d: expected %v, but got %v\n", i, test.expected, actual)
@@ -497,10 +491,11 @@ func TestSystemFindFirstNonZeroCoefficientsFunction(t *testing.T) {
 
 func TestSystemIsTriangularFormFunction(t *testing.T) {
 	tests := []struct {
-		name                 string
-		input                System
-		expected             bool
-		expectedErrorMessage string
+		name                          string
+		input                         System
+		expected                      bool
+		expectedErrorMessage          string
+		expectedAllLeadingTermsAreOne bool
 	}{
 		{
 			name: "opposite of triangular form",
@@ -508,7 +503,8 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(0, 0, 0), 1),
 				NewLine(NewVector(0, 1, 1), 2),
 				NewLine(NewVector(1, 1, 1), 3)),
-			expected: false,
+			expected:                      false,
+			expectedAllLeadingTermsAreOne: true,
 		},
 		{
 			name: "starts well, but the second item is incorrect",
@@ -516,7 +512,8 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(0, 1, 1), 1),
 				NewLine(NewVector(0, 0, 0), 2),
 				NewLine(NewVector(1, 1, 1), 3)),
-			expected: false,
+			expected:                      false,
+			expectedAllLeadingTermsAreOne: true,
 		},
 		{
 			name: "perfect",
@@ -524,7 +521,8 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(1, 1, 1), 1),
 				NewLine(NewVector(0, 1, 1), 2),
 				NewLine(NewVector(0, 0, 1), 3)),
-			expected: true,
+			expected:                      true,
+			expectedAllLeadingTermsAreOne: true,
 		},
 		{
 			name: "zeroes",
@@ -532,7 +530,8 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(1, 0, 0), 1),
 				NewLine(NewVector(0, 1, 0), 2),
 				NewLine(NewVector(0, 0, 1), 3)),
-			expected: true,
+			expected:                      true,
+			expectedAllLeadingTermsAreOne: true,
 		},
 		{
 			name: "already triangular",
@@ -540,7 +539,8 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(5, 4, -1), 0),
 				NewLine(NewVector(0, 10, 3), 11),
 				NewLine(NewVector(0, 0, 3), 3)),
-			expected: true,
+			expected:                      true,
+			expectedAllLeadingTermsAreOne: false,
 		},
 		{
 			name: "mismatched term counts",
@@ -548,8 +548,9 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(0, 0), 1),
 				NewLine(NewVector(0, 1, 1), 2),
 				NewLine(NewVector(1, 1, 1), 3)),
-			expected:             false,
-			expectedErrorMessage: "all equations in a system need to have the same number of terms",
+			expected:                      false,
+			expectedErrorMessage:          "all equations in a system need to have the same number of terms",
+			expectedAllLeadingTermsAreOne: true,
 		},
 		{
 			name: "more terms than equations",
@@ -557,8 +558,9 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(0, 0, 1, 1), 1),
 				NewLine(NewVector(0, 1, 1, 1), 2),
 				NewLine(NewVector(1, 1, 1, 1), 3)),
-			expected:             false,
-			expectedErrorMessage: "the number of terms in each equation needs to match the number of terms in the system",
+			expected:                      false,
+			expectedErrorMessage:          "the number of terms in each equation needs to match the number of terms in the system",
+			expectedAllLeadingTermsAreOne: true,
 		},
 		{
 			name: "more equations than terms",
@@ -566,7 +568,8 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(1, 2), 1),
 				NewLine(NewVector(0, 0), 1),
 				NewLine(NewVector(0, 0), 2)),
-			expected: true,
+			expected:                      true,
+			expectedAllLeadingTermsAreOne: true,
 		},
 		{
 			name: "zeroes in all the right places. the leading term is index 0 for them all, so triangular form is faked",
@@ -574,7 +577,8 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(1, 1, 1, 1), 1),
 				NewLine(NewVector(1, 0, 1, 1), 2),
 				NewLine(NewVector(1, 1, 0, 1), 3)),
-			expected: true,
+			expected:                      true,
+			expectedAllLeadingTermsAreOne: true,
 		},
 		{
 			name: "zeroes in the right places, but the leading term is out of order",
@@ -582,7 +586,8 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(1, 1, 1, 1), 1),
 				NewLine(NewVector(0, 1, 1, 1), 2),
 				NewLine(NewVector(1, 0, 1, 1), 3)),
-			expected: false,
+			expected:                      false,
+			expectedAllLeadingTermsAreOne: true,
 		},
 		{
 			name: "system with zero coefficient for second row, second term",
@@ -590,7 +595,8 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(0, 1, 1), 1),
 				NewLine(NewVector(0, 0, 2), 2),
 				NewLine(NewVector(0, 0, 0), 3)),
-			expected: true,
+			expected:                      true,
+			expectedAllLeadingTermsAreOne: false,
 		},
 		{
 			name: "system with non-zero coefficient for second row, first term",
@@ -598,7 +604,8 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(0, 1, 1), 1),
 				NewLine(NewVector(1, 0, 2), 2),
 				NewLine(NewVector(0, 0, 0), 3)),
-			expected: false,
+			expected:                      false,
+			expectedAllLeadingTermsAreOne: true,
 		},
 		{
 			name: "system with no solution for third term",
@@ -606,7 +613,8 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(1, 1, 0), 1),
 				NewLine(NewVector(0, 2, 0), 2),
 				NewLine(NewVector(0, 0, 0), 3)),
-			expected: true,
+			expected:                      true,
+			expectedAllLeadingTermsAreOne: false,
 		},
 		{
 			name: "it's OK to have multiple leading zeroes",
@@ -614,7 +622,8 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(1, 0, 0, 0), 1),
 				NewLine(NewVector(0, 0, 1, 0), 2),
 				NewLine(NewVector(0, 0, 0, 1), 3)),
-			expected: true,
+			expected:                      true,
+			expectedAllLeadingTermsAreOne: true,
 		},
 		{
 			name: "the leading term can be followed by anything",
@@ -622,7 +631,8 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(1, 5, 5, 5), 1),
 				NewLine(NewVector(0, 0, 1, 2), 2),
 				NewLine(NewVector(0, 0, 0, 1), 3)),
-			expected: true,
+			expected:                      true,
+			expectedAllLeadingTermsAreOne: true,
 		},
 		{
 			name: "equations with more variables must be at the top",
@@ -630,12 +640,22 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 				NewLine(NewVector(0, 0, 0, 0), 1),
 				NewLine(NewVector(0, 0, 1, 2), 2),
 				NewLine(NewVector(0, 0, 0, 1), 3)),
-			expected: false,
+			expected:                      false,
+			expectedAllLeadingTermsAreOne: true,
+		},
+		{
+			name: "leading terms don't need to be zero",
+			input: NewSystem(
+				NewLine(NewVector(2, 0, 0, 0), 1),
+				NewLine(NewVector(0, 3, 1, 2), 2),
+				NewLine(NewVector(0, 0, 4, 1), 3)),
+			expected:                      true,
+			expectedAllLeadingTermsAreOne: false,
 		},
 	}
 
 	for _, test := range tests {
-		actual, err := test.input.IsTriangularForm()
+		actual, actualAllLeadingTermsAreOne, err := test.input.IsTriangularForm()
 		if err != nil {
 			if test.expectedErrorMessage == "" || !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
 				t.Errorf("%s: unexpected error: %v\n", test.name, err)
@@ -645,6 +665,10 @@ func TestSystemIsTriangularFormFunction(t *testing.T) {
 
 		if actual != test.expected {
 			t.Errorf("%s: expected %v, but got %v", test.name, test.expected, actual)
+		}
+
+		if actualAllLeadingTermsAreOne != test.expectedAllLeadingTermsAreOne {
+			t.Errorf("%s: expected all leading terms to be one: %v, but got %v", test.name, test.expectedAllLeadingTermsAreOne, actualAllLeadingTermsAreOne)
 		}
 	}
 }
@@ -925,10 +949,18 @@ func TestSystemIsReducedRowEchelonFormFunction(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "each equation must only have one non-zero term",
+			name: "each equation has a leading term",
 			input: NewSystem(
 				NewLine(NewVector(1, 0, 0), 1),
 				NewLine(NewVector(0, 1, 1), 2),
+				NewLine(NewVector(0, 0, 1), 3)),
+			expected: true,
+		},
+		{
+			name: "each equation has a leading term",
+			input: NewSystem(
+				NewLine(NewVector(0, 1, 0), 1),
+				NewLine(NewVector(1, 0, 1), 2),
 				NewLine(NewVector(0, 0, 1), 3)),
 			expected: false,
 		},
@@ -1062,49 +1094,49 @@ func TestSystemSolveFunction(t *testing.T) {
 	}
 }
 
-func TestSystemPivotIndices(t *testing.T) {
+func TestSystemParameterizationFunction(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    System
-		expected []int
+		name                 string
+		input                System
+		expected             Parameterization
+		expectedErrorMessage string
 	}{
 		{
-			name: "no pivots",
+			name: "the y and z coordinates are free variables, they don't affect the outcome",
 			input: NewSystem(
-				NewLine(NewVector(0, 0, 0), 1),
-				NewLine(NewVector(0, 0, 0), 2),
-			),
-		},
-		{
-			name: "pivot at index 0, not at 1, or two",
-			input: NewSystem(
-				NewLine(NewVector(1, 0, 0), 1),
-				NewLine(NewVector(0, 0, 0), 2),
-			),
-			expected: []int{0},
-		},
-		{
-			name: "pivot at index 0, not at 1, or two (2)",
-			input: NewSystem(
-				NewLine(NewVector(0, 0, 0), 1),
-				NewLine(NewVector(1, 0, 0), 2),
-			),
-			expected: []int{0},
-		},
-		{
-			name: "no pivots because of multiple values",
-			input: NewSystem(
-				NewLine(NewVector(0, 1, 1), 1),
-				NewLine(NewVector(1, 0, 1), 2),
-			),
+				NewLine(NewVector(1, 1, 1), 1),
+				NewLine(NewVector(0, 0, 0), 1)),
+			expected: Parameterization{
+				Basepoint: NewVector(1, 0, 0),
+				DirectionVectors: []Vector{
+					NewVector(-1, 1, 0),
+					NewVector(-1, 0, 1),
+				},
+			},
 		},
 	}
 
 	for _, test := range tests {
-		actual := test.input.PivotIndices()
+		actual, err := test.input.Parameterize()
+		if err != nil {
+			if test.expectedErrorMessage == "" || !strings.HasPrefix(err.Error(), test.expectedErrorMessage) {
+				t.Errorf("%s: unexpected error: %v\n", test.name, err)
+			}
+			continue
+		}
 
-		if !reflect.DeepEqual(actual, test.expected) {
-			t.Errorf("%s: for %v expected %v, but got %v", test.name, test.input, test.expected, actual)
+		if !actual.Basepoint.Eq(test.expected.Basepoint) {
+			t.Errorf("%s: expected basepoint %v, but got %v", test.name, test.expected.Basepoint, actual.Basepoint)
+		}
+
+		if len(actual.DirectionVectors) != len(test.expected.DirectionVectors) {
+			t.Fatalf("%s: expected %d direction vectors, but got %v results of %v", test.name, len(test.expected.DirectionVectors), len(actual.DirectionVectors), actual.DirectionVectors)
+		}
+
+		for i := range actual.DirectionVectors {
+			if !actual.DirectionVectors[i].Eq(test.expected.DirectionVectors[i]) {
+				t.Errorf("%s: comparing direction vectors with index [%d], expected %v, but got %v", test.name, i, test.expected.DirectionVectors[i], actual.DirectionVectors[i])
+			}
 		}
 	}
 }

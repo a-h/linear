@@ -102,17 +102,18 @@ func (s1 System) Add(srcIndex int, dstIndex int, coefficient int) (System, error
 }
 
 // FindFirstNonZeroCoefficients finds the indices of the first non-zero coefficient of each equation in the
-// system.
-func (s1 System) FindFirstNonZeroCoefficients() (indices []int, err error) {
+// system. If a non-zero coefficient is not found, then -1 is returned for that item.
+func (s1 System) FindFirstNonZeroCoefficients() (indices []int) {
 	indices = make([]int, len(s1))
 	for i, e := range s1 {
 		idx, _, ok := e.FirstNonZeroCoefficient()
 		if !ok {
-			return indices, fmt.Errorf("failed to find a non-zero coefficient for equation at index %d - %v", i, e)
+			indices[i] = -1
+			continue
 		}
 		indices[i] = idx
 	}
-	return indices, nil
+	return indices
 }
 
 // TriangularForm organises the system by leading term.
@@ -160,17 +161,18 @@ func (s1 System) TriangularForm() (System, error) {
 
 // IsTriangularForm determines whether the system is in triangular form, where the top row starts with a non-zero
 // term, the next one down starts with a zero etc., the one after that starts with two zero terms etc.
-func (s1 System) IsTriangularForm() (triangular bool, err error) {
+func (s1 System) IsTriangularForm() (triangular bool, allLeadingTermsAreOne bool, err error) {
 	if !s1.AllEquationsHaveSameNumberOfTerms() {
-		return false, errors.New("all equations in a system need to have the same number of terms")
+		return false, false, errors.New("all equations in a system need to have the same number of terms")
 	}
+	allLeadingTermsAreOne = true
 	// Store the leftmost term for the system, i.e. the term that has had a non-zero value.
 	leftmostTerm := 0
 	alreadyHadZeroCoefficientEquation := false
 	for _, e := range s1 {
-		fnz, _, equationHasNonZeroCoefficient := e.FirstNonZeroCoefficient()
+		fnz, coefficient, equationHasNonZeroCoefficient := e.FirstNonZeroCoefficient()
 		if alreadyHadZeroCoefficientEquation && equationHasNonZeroCoefficient {
-			return false, nil
+			return false, allLeadingTermsAreOne, nil
 		}
 		if !equationHasNonZeroCoefficient {
 			alreadyHadZeroCoefficientEquation = true
@@ -180,12 +182,16 @@ func (s1 System) IsTriangularForm() (triangular bool, err error) {
 		// 0, 1
 		// 1, 0
 		if fnz < leftmostTerm {
-			return false, nil
+			return false, allLeadingTermsAreOne, nil
+		}
+		// Check whether the leading coefficient is 1. It's the additional check required for RREF.
+		if !tolerance.IsWithin(coefficient, 1, DefaultTolerance) {
+			allLeadingTermsAreOne = false
 		}
 		// Update the leftmostTerm and carry on.
 		leftmostTerm = fnz
 	}
-	return true, nil
+	return true, allLeadingTermsAreOne, nil
 }
 
 // AllEquationsHaveSameNumberOfTerms returns true when all equations in the system have the same number of terms.
@@ -252,7 +258,7 @@ func allTrue(bools []bool) bool {
 
 // IsRREF determines whether a system is in Reduced Row Echelon form.
 func (s1 System) IsRREF() (bool, error) {
-	isTriangular, err := s1.IsTriangularForm()
+	isTriangular, allLeadingTermsAreOne, err := s1.IsTriangularForm()
 	if !isTriangular || err != nil {
 		return isTriangular, err
 	}
@@ -264,18 +270,8 @@ func (s1 System) IsRREF() (bool, error) {
 	//   a nonzero row is always strictly to the right of the leading coefficient of the row above
 	//   it (some texts add the condition that the leading coefficient must be 1[1]).
 	// These criteria are met by the IsTriangularForm function, except that:
-	//   the leading coefficient must be one, and each coefficient must only be defined once
-	// so let's check that.
-	for _, e := range s1 {
-		if e.NormalVector.IsZeroVector() {
-			continue
-		}
-		_, hasPivot := e.PivotIndex()
-		if !hasPivot {
-			return false, nil
-		}
-	}
-	return true, nil
+	//   the leading coefficient must be one.
+	return isTriangular && allLeadingTermsAreOne, nil
 }
 
 // Solve solves the equation using Gaussian Elimination and returns whether the solution has
@@ -316,15 +312,85 @@ func (s1 System) Solve() (solution Vector, noSolution bool, infiniteSolutions bo
 	return Vector(solutionVector), false, false, nil
 }
 
-// PivotIndices finds the coefficients in the system which have pivots.
-func (s1 System) PivotIndices() []int {
-	var indices []int
-	for _, e := range s1 {
-		i, ok := e.PivotIndex()
-		if !ok {
+// Parameterize handles the case when an infinite number of solutions is found to a
+// system of equations. This occurs when one or more of the coefficients is "free".
+// The function returns a Parameterization object, which consists of a basepoint vector
+// (the )
+func (s1 System) Parameterize() (Parameterization, error) {
+	if len(s1) == 0 {
+		return Parameterization{}, errors.New("a system cannot be parameterized if it it is empty")
+	}
+	if !s1.AllEquationsHaveSameNumberOfTerms() {
+		return Parameterization{}, errors.New("a system cannot be parameterized if not all equations have the same number of terms")
+	}
+	isRREF, err := s1.IsRREF()
+	if err != nil {
+		return Parameterization{}, err
+	}
+	if !isRREF {
+		return Parameterization{}, errors.New("the system is not in RREF form so can't be parameterized")
+	}
+
+	// Find free variables (coefficients which don't have a pivot variable).
+	// Find the indices of coefficients which _do_ have pivots.
+	fmt.Println("system", s1)
+	pivotIndices := s1.FindFirstNonZeroCoefficients()
+	fmt.Println("pivotIndices", pivotIndices)
+	pivotMap := convertPivotArrayToMap(pivotIndices)
+	fmt.Println("pivotMap", pivotMap)
+	// Then discard them.
+	var freeIndices []int
+	for i := 0; i < len(s1[0].NormalVector); i++ {
+		// If it's not a pivot, it's free.
+		if _, ok := pivotMap[i]; !ok {
+			freeIndices = append(freeIndices, i)
+		}
+	}
+	fmt.Println("freeIndices", freeIndices)
+
+	// Now we know which indices are free, we can make a direction vector.
+	directionVectors := []Vector{}
+
+	dimensions := len(s1[0].NormalVector)
+	for _, freeIndex := range freeIndices {
+		fmt.Println("processing free index", freeIndex)
+		directionVector := Vector(make([]float64, dimensions))
+		directionVector[freeIndex] = 1
+		for i, p := range s1 {
+			fmt.Println("iterating through", p)
+			pivotVar := pivotIndices[i]
+			fmt.Println("pivotVar", pivotVar)
+			if pivotVar < 0 {
+				continue
+			}
+			directionVector[pivotVar] = -p.NormalVector[freeIndex]
+			fmt.Println(directionVector)
+		}
+		directionVectors = append(directionVectors, directionVector)
+	}
+
+	// Calculate the basepoint.
+	basepointVector := Vector(make([]float64, dimensions))
+	for i, p := range s1 {
+		pivotVar := pivotIndices[i]
+		if pivotVar < 0 {
 			continue
 		}
-		indices = append(indices, i)
+		basepointVector[pivotVar] = p.ConstantTerm
 	}
-	return indices
+
+	return Parameterization{
+		Basepoint:        basepointVector,
+		DirectionVectors: directionVectors,
+	}, nil
+}
+
+func convertPivotArrayToMap(integers []int) map[int]interface{} {
+	rv := make(map[int]interface{})
+	for _, v := range integers {
+		if v != -1 {
+			rv[v] = true
+		}
+	}
+	return rv
 }
