@@ -430,11 +430,13 @@ func quiz13() { // Coding Parameterization
 	system = linear.NewSystem(
 		linear.NewLine(linear.NewVector(0.935, 1.76, -9.365), -9.955),
 		linear.NewLine(linear.NewVector(0.187, 0.352, -1.873), -1.991),
-		linear.NewLine(linear.NewVector(0.374, 0.704, -3.746), -3.982))
+		linear.NewLine(linear.NewVector(0.374, 0.704, -3.746), -3.982),
+		linear.NewLine(linear.NewVector(-0.561, -1.056, 5.619), 5.973))
 	solution, noSolution, infiniteSolutions, _ = system.Solve()
 	fmt.Printf("q3: Solution: %v No Solution: %v Infinite Solutions: %v\n", solution, noSolution, infiniteSolutions)
 	if infiniteSolutions {
 		s, _, _ := system.ComputeRREF()
-		fmt.Println(s.Parameterize())
+		p, _ := s.Parameterize()
+		fmt.Println(p)
 	}
 }

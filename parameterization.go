@@ -3,6 +3,10 @@ package linear
 import (
 	"bytes"
 	"fmt"
+
+	"math"
+
+	"github.com/a-h/linear/tolerance"
 )
 
 // Parameterization provides a way of enumerating the many possible solutions to a system of equations
@@ -15,18 +19,40 @@ type Parameterization struct {
 func (p1 Parameterization) String() string {
 	buf := bytes.NewBufferString("{ ")
 
-	buf.WriteString(fmt.Sprintf("Basepoint: %v, ", p1.Basepoint))
+	for variableIndex, basepointValue := range p1.Basepoint {
+		buf.WriteString(fmt.Sprintf("x%v = ", getSubscript(variableIndex+1)))
 
-	buf.WriteString("Direction Vectors: ")
-	buf.WriteString(" [ ")
-	for i, e := range p1.DirectionVectors {
-		buf.WriteString(e.String())
-		if i < len(p1.DirectionVectors)-1 {
+		var nonzero bool
+		if !tolerance.IsWithin(basepointValue, 0, DefaultTolerance) {
+			buf.WriteString(fmt.Sprintf("%v", basepointValue))
+			nonzero = true
+		}
+
+		for directionIndex, directionVector := range p1.DirectionVectors {
+			value := directionVector[variableIndex]
+			if tolerance.IsWithin(value, 0, DefaultTolerance) {
+				continue
+			}
+			var sign string
+			if nonzero {
+				if value < 0 {
+					sign = " - "
+				} else {
+					sign = " + "
+				}
+			}
+			var freeVariableCoefficient string
+			if !tolerance.IsWithin(math.Abs(value), 1, DefaultTolerance) {
+				freeVariableCoefficient = fmt.Sprintf("%v", math.Abs(value))
+			}
+			buf.WriteString(fmt.Sprintf("%v%v%v", sign, freeVariableCoefficient, getFreeVariableName(directionIndex)))
+		}
+		if variableIndex < len(p1.Basepoint)-1 {
 			buf.WriteString(", ")
 		}
 	}
 
-	buf.WriteString(" ] }")
+	buf.WriteString(" }")
 	return buf.String()
 }
 

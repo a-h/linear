@@ -9,10 +9,20 @@ func TestParameterizationStringRepresentation(t *testing.T) {
 	}{
 		{
 			input: Parameterization{
-				Basepoint:        NewVector(-1.3458774161867777, 0, 0.5847953216374271),
+				Basepoint:        NewVector(-1.346, 0, 0.585),
 				DirectionVectors: []Vector{NewVector(-1, 1, -0)},
 			},
-			expected: "{ x = -1.346t - t, y = t, z = 0.585 }",
+			expected: "{ x₁ = -1.346 - t, x₂ = t, x₃ = 0.585 }",
+		},
+		{
+			input: Parameterization{
+				Basepoint: NewVector(-10.647, 0, 0),
+				DirectionVectors: []Vector{
+					NewVector(-1.882, 1, 0),
+					NewVector(10.016, 0, 1),
+				},
+			},
+			expected: "{ x₁ = -10.647 - 1.882t + 10.016s, x₂ = t, x₃ = s }",
 		},
 	}
 
