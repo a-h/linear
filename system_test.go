@@ -1127,6 +1127,19 @@ func TestSystemParameterizationFunction(t *testing.T) {
 			},
 		},
 		{
+			name: "freetext.org example with 2 free variables",
+			input: NewSystem(
+				NewLine(NewVector(1, 2.0/3.0, 0), 2.0/3.0),
+				NewLine(NewVector(0, 0, 0), 1)),
+			expected: Parameterization{
+				Basepoint: NewVector(2.0/3.0, 0, 0),
+				DirectionVectors: []Vector{
+					NewVector(-2.0/3.0, 1, 0),
+					NewVector(0, 0, 1),
+				},
+			},
+		},
+		{
 			name: "input is not RREF because the leading coefficient is 2",
 			input: NewSystem(
 				NewLine(NewVector(0, 2, 0), 1),

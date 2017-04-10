@@ -37,6 +37,8 @@ func main() {
 		quiz11()
 	case 12:
 		quiz12()
+	case 13:
+		quiz13()
 	default:
 		fmt.Println("Quiz not found.")
 	}
@@ -395,4 +397,44 @@ func quiz12() { // Coding GE Solution
 	s = linear.NewSystem(p1, p2, p3, p4)
 	solution, noSolution, infiniteSolutions, _ = s.Solve()
 	fmt.Printf("q4: Solution: %v No Solution: %v Infinite Solutions: %v\n", solution, noSolution, infiniteSolutions)
+}
+
+func quiz13() { // Coding Parameterization
+	// Q1
+	// There appears to be a bug in the tutorial code here, see answer at:
+	// https://github.com/omarrayward/Linear-Algebra-Refresher-Udacity/blob/master/linear_system.py
+	system := linear.NewSystem(
+		linear.NewLine(linear.NewVector(0.786, 0.786, 0.588), -0.714),
+		linear.NewLine(linear.NewVector(-0.131, -0.131, 0.244), 0.319)) // The tutorial shows -0.138, not -0.131
+
+	solution, noSolution, infiniteSolutions, _ := system.Solve()
+	fmt.Printf("q1: Solution: %v No Solution: %v Infinite Solutions: %v\n", solution, noSolution, infiniteSolutions)
+	if infiniteSolutions {
+		s, _, _ := system.ComputeRREF()
+		fmt.Println(s.Parameterize())
+	}
+
+	// Q2
+	system = linear.NewSystem(
+		linear.NewLine(linear.NewVector(8.631, 5.112, -1.816), -5.113),
+		linear.NewLine(linear.NewVector(4.315, 11.132, -5.27), -6.775),
+		linear.NewLine(linear.NewVector(-2.158, 3.01, -1.727), -0.831))
+	solution, noSolution, infiniteSolutions, _ = system.Solve()
+	fmt.Printf("q2: Solution: %v No Solution: %v Infinite Solutions: %v\n", solution, noSolution, infiniteSolutions)
+	if infiniteSolutions {
+		s, _, _ := system.ComputeRREF()
+		fmt.Println(s.Parameterize())
+	}
+
+	// Q3
+	system = linear.NewSystem(
+		linear.NewLine(linear.NewVector(0.935, 1.76, -9.365), -9.955),
+		linear.NewLine(linear.NewVector(0.187, 0.352, -1.873), -1.991),
+		linear.NewLine(linear.NewVector(0.374, 0.704, -3.746), -3.982))
+	solution, noSolution, infiniteSolutions, _ = system.Solve()
+	fmt.Printf("q3: Solution: %v No Solution: %v Infinite Solutions: %v\n", solution, noSolution, infiniteSolutions)
+	if infiniteSolutions {
+		s, _, _ := system.ComputeRREF()
+		fmt.Println(s.Parameterize())
+	}
 }
