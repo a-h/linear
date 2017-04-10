@@ -10,14 +10,14 @@ import (
 	"github.com/a-h/linear/tolerance"
 )
 
-// Line consists of a normal vector which specifies the direction, and a constant term.
+// Equation consists of a normal vector which specifies the direction, and a constant term.
 // The basepoint is calculated as required.
-type Line struct {
+type Equation struct {
 	NormalVector Vector
 	ConstantTerm float64
 }
 
-// NewLine creates a new Line based on the variable terms, e.g.:
+// NewEquation creates a new Equation based on the variable terms, e.g.:
 // Ax + By = C
 // For example, for a 2D vector (2, 3) and constant 5 would result in 2x + 3y = 5
 // The slope intercept (y = mx + b) form of that would be:
@@ -36,8 +36,8 @@ type Line struct {
 //  2x = 5
 //  x = 5/2
 //   x intercept = (5/2, 0)
-func NewLine(normalVector Vector, constantTerm float64) Line {
-	return Line{
+func NewEquation(normalVector Vector, constantTerm float64) Equation {
+	return Equation{
 		ConstantTerm: constantTerm,
 		NormalVector: normalVector,
 	}
@@ -45,7 +45,7 @@ func NewLine(normalVector Vector, constantTerm float64) Line {
 
 // NonZeroValuePoint finds a point on the Line where one of the dimension values is not zero.
 // If a non-zero coefficient is not found, ok is set to false.
-func (l1 Line) NonZeroValuePoint() (nonzero Vector, ok bool) {
+func (l1 Equation) NonZeroValuePoint() (nonzero Vector, ok bool) {
 	basepointVector := make([]float64, len(l1.NormalVector))
 	index, value, ok := firstNonZeroElement(l1.NormalVector)
 	if !ok {
@@ -57,7 +57,7 @@ func (l1 Line) NonZeroValuePoint() (nonzero Vector, ok bool) {
 
 // FirstNonZeroCoefficient finds the first non-zero coefficient of the normal vector of the plane.
 // If a non-zero coefficient is not found, ok is set to false.
-func (l1 Line) FirstNonZeroCoefficient() (index int, value float64, ok bool) {
+func (l1 Equation) FirstNonZeroCoefficient() (index int, value float64, ok bool) {
 	return firstNonZeroElement(l1.NormalVector)
 }
 
@@ -71,7 +71,7 @@ func firstNonZeroElement(v Vector) (index int, value float64, ok bool) {
 	return 0, 0, false
 }
 
-func (l1 Line) String() string {
+func (l1 Equation) String() string {
 	buf := bytes.Buffer{}
 	for i, p := range l1.NormalVector {
 		if i == 0 {
@@ -132,12 +132,12 @@ func getSubscript(i int) string {
 }
 
 // IsParallelTo determines whether two lines are parallel to each other.
-func (l1 Line) IsParallelTo(l2 Line) (bool, error) {
+func (l1 Equation) IsParallelTo(l2 Equation) (bool, error) {
 	return l1.NormalVector.IsParallelTo(l2.NormalVector)
 }
 
 // Eq determines if two lines are equal.
-func (l1 Line) Eq(l2 Line) (bool, error) {
+func (l1 Equation) Eq(l2 Equation) (bool, error) {
 	// If either vector is zero, and the other isn't they're not equal.
 	l1IsZero := l1.NormalVector.IsZeroVector()
 	l2IsZero := l2.NormalVector.IsZeroVector()
@@ -171,7 +171,7 @@ func (l1 Line) Eq(l2 Line) (bool, error) {
 }
 
 // Y gets the Y value for a given X.
-func (l1 Line) Y(x float64) (float64, error) {
+func (l1 Equation) Y(x float64) (float64, error) {
 	if len(l1.NormalVector) != 2 {
 		return 0, errors.New("The Y function only supports lines with 2 dimensions.")
 	}
@@ -182,7 +182,7 @@ func (l1 Line) Y(x float64) (float64, error) {
 }
 
 // X gets the X value for a given Y value.
-func (l1 Line) X(y float64) (float64, error) {
+func (l1 Equation) X(y float64) (float64, error) {
 	if len(l1.NormalVector) != 2 {
 		return 0, errors.New("The X function only supports lines with 2 dimensions.")
 	}
@@ -195,7 +195,7 @@ func (l1 Line) X(y float64) (float64, error) {
 // IntersectionWith calculates the intersection with another 2D line.
 // intersects is set to true if the lines intersect.
 // equal is set to true if the lines are equal and therefore intersect infinitely many times.
-func (l1 Line) IntersectionWith(l2 Line) (intersection Vector, intersects bool, equal bool, err error) {
+func (l1 Equation) IntersectionWith(l2 Equation) (intersection Vector, intersects bool, equal bool, err error) {
 	if len(l1.NormalVector) != 2 || len(l2.NormalVector) != 2 {
 		return Vector{}, false, false, fmt.Errorf("The IntersectionWith function requires that both lines must have 2 dimensions. The base line has %d dimensions, l2 has %d dimensions.", len(l1.NormalVector), len(l2.NormalVector))
 	}
@@ -248,13 +248,13 @@ func (l1 Line) IntersectionWith(l2 Line) (intersection Vector, intersects bool, 
 
 // CancelTerm cancels a term in the target line by determining the coefficient which links them
 // and applying the first term to the second term to cancel them out.
-func (l1 Line) CancelTerm(target Line, termIndex int) (Line, error) {
+func (l1 Equation) CancelTerm(target Equation, termIndex int) (Equation, error) {
 	if termIndex >= len(l1.NormalVector) || termIndex < 0 {
-		return Line{}, fmt.Errorf("term index %d is not present in l1", termIndex)
+		return Equation{}, fmt.Errorf("term index %d is not present in l1", termIndex)
 	}
 
 	if termIndex >= len(target.NormalVector) || termIndex < 0 {
-		return Line{}, fmt.Errorf("term index %d is not present in the target line", termIndex)
+		return Equation{}, fmt.Errorf("term index %d is not present in the target line", termIndex)
 	}
 
 	srcCoefficient := l1.NormalVector[termIndex]
@@ -272,13 +272,13 @@ func (l1 Line) CancelTerm(target Line, termIndex int) (Line, error) {
 
 	outputVector, err := target.NormalVector.Add(multipliedVector)
 	if err != nil {
-		return Line{}, err
+		return Equation{}, err
 	}
 	outputConstant := target.ConstantTerm + multipliedConstant
-	return NewLine(outputVector, outputConstant), nil
+	return NewEquation(outputVector, outputConstant), nil
 }
 
 // Scale scales the line by a scalar multiplier.
-func (l1 Line) Scale(scalar float64) Line {
-	return NewLine(l1.NormalVector.Scale(scalar), l1.ConstantTerm*scalar)
+func (l1 Equation) Scale(scalar float64) Equation {
+	return NewEquation(l1.NormalVector.Scale(scalar), l1.ConstantTerm*scalar)
 }

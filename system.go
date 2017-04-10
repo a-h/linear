@@ -10,11 +10,11 @@ import (
 
 // System defines a system of equations, where each equation
 // is a linear equation.
-type System []Line
+type System []Equation
 
-// NewSystem creates a new system of lines.
-func NewSystem(lines ...Line) System {
-	return System(lines)
+// NewSystem creates a new system of equations.
+func NewSystem(equations ...Equation) System {
+	return System(equations)
 }
 
 // String writes out each equation in the system, delineated by commas and
@@ -61,7 +61,7 @@ func (s1 System) Swap(a int, b int) (System, error) {
 		return System{}, fmt.Errorf("index %d is not present in the system", b)
 	}
 
-	op := []Line(s1)
+	op := []Equation(s1)
 	op[a], op[b] = op[b], op[a]
 	return System(op), nil
 }
@@ -72,7 +72,7 @@ func (s1 System) Multiply(index int, coefficient float64) (System, error) {
 		return System{}, fmt.Errorf("index %d is not present in the system", index)
 	}
 
-	op := []Line(s1)
+	op := []Equation(s1)
 	op[index] = op[index].Scale(coefficient)
 	return System(op), nil
 }
@@ -87,7 +87,7 @@ func (s1 System) Add(srcIndex int, dstIndex int, coefficient int) (System, error
 		return System{}, fmt.Errorf("destination index %d is not present in the system", dstIndex)
 	}
 
-	op := []Line(s1)
+	op := []Equation(s1)
 	src := op[srcIndex]
 	multipliedVector := src.NormalVector.Scale(float64(coefficient))
 

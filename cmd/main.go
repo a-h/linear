@@ -200,20 +200,20 @@ func quiz6() { // Coding cross products
 
 func quiz7() { // Insections of lines
 	questions := []struct {
-		a linear.Line
-		b linear.Line
+		a linear.Equation
+		b linear.Equation
 	}{
 		{
-			a: linear.NewLine(linear.NewVector(4.046, 2.836), 1.21),
-			b: linear.NewLine(linear.NewVector(10.115, 7.09), 3.025),
+			a: linear.NewEquation(linear.NewVector(4.046, 2.836), 1.21),
+			b: linear.NewEquation(linear.NewVector(10.115, 7.09), 3.025),
 		},
 		{
-			a: linear.NewLine(linear.NewVector(7.204, 3.182), 8.68),
-			b: linear.NewLine(linear.NewVector(8.172, 4.114), 9.883),
+			a: linear.NewEquation(linear.NewVector(7.204, 3.182), 8.68),
+			b: linear.NewEquation(linear.NewVector(8.172, 4.114), 9.883),
 		},
 		{
-			a: linear.NewLine(linear.NewVector(1.182, 5.562), 6.744),
-			b: linear.NewLine(linear.NewVector(1.773, 8.343), 9.525),
+			a: linear.NewEquation(linear.NewVector(1.182, 5.562), 6.744),
+			b: linear.NewEquation(linear.NewVector(1.773, 8.343), 9.525),
 		},
 	}
 
@@ -237,20 +237,20 @@ func quiz7() { // Insections of lines
 
 func quiz8() { // Parallel and equal planes
 	questions := []struct {
-		a linear.Line
-		b linear.Line
+		a linear.Equation
+		b linear.Equation
 	}{
 		{
-			a: linear.NewLine(linear.NewVector(-0.412, 3.806, 0.728), -3.46),
-			b: linear.NewLine(linear.NewVector(1.03, -9.515, -1.82), 8.65),
+			a: linear.NewEquation(linear.NewVector(-0.412, 3.806, 0.728), -3.46),
+			b: linear.NewEquation(linear.NewVector(1.03, -9.515, -1.82), 8.65),
 		},
 		{
-			a: linear.NewLine(linear.NewVector(2.611, 5.528, 0.283), 4.6),
-			b: linear.NewLine(linear.NewVector(7.715, 8.306, 5.342), 3.76),
+			a: linear.NewEquation(linear.NewVector(2.611, 5.528, 0.283), 4.6),
+			b: linear.NewEquation(linear.NewVector(7.715, 8.306, 5.342), 3.76),
 		},
 		{
-			a: linear.NewLine(linear.NewVector(-7.926, 8.625, -7.212), -7.952),
-			b: linear.NewLine(linear.NewVector(-2.642, 2.875, -2.404), -2.443),
+			a: linear.NewEquation(linear.NewVector(-7.926, 8.625, -7.212), -7.952),
+			b: linear.NewEquation(linear.NewVector(-2.642, 2.875, -2.404), -2.443),
 		},
 	}
 
@@ -274,10 +274,10 @@ func quiz8() { // Parallel and equal planes
 
 func quiz9() { // Coding row operations
 	// Converted the Python code from Udacity to match the Go I've written.
-	p0 := linear.NewLine(linear.NewVector(1, 1, 1), 1)
-	p1 := linear.NewLine(linear.NewVector(0, 1, 0), 2)
-	p2 := linear.NewLine(linear.NewVector(1, 1, -1), 3)
-	p3 := linear.NewLine(linear.NewVector(1, 0, -2), 2)
+	p0 := linear.NewEquation(linear.NewVector(1, 1, 1), 1)
+	p1 := linear.NewEquation(linear.NewVector(0, 1, 0), 2)
+	p2 := linear.NewEquation(linear.NewVector(1, 1, -1), 3)
+	p3 := linear.NewEquation(linear.NewVector(1, 0, -2), 2)
 
 	s := linear.NewSystem(p0, p1, p2, p3)
 
@@ -286,14 +286,14 @@ func quiz9() { // Coding row operations
 	s = test(2, func() (linear.System, error) { return s.Swap(1, 3) }, linear.NewSystem(p1, p3, p2, p0))
 	s = test(3, func() (linear.System, error) { return s.Swap(3, 1) }, linear.NewSystem(p1, p0, p2, p3))
 	s = test(4, func() (linear.System, error) { return s.Multiply(0, 1) }, linear.NewSystem(p1, p0, p2, p3))
-	p2_2 := linear.NewLine(linear.NewVector(-1, -1, 1), -3)
+	p2_2 := linear.NewEquation(linear.NewVector(-1, -1, 1), -3)
 	s = test(5, func() (linear.System, error) { return s.Multiply(2, -1) }, linear.NewSystem(p1, p0, p2_2, p3))
-	p1_2 := linear.NewLine(linear.NewVector(10, 10, 10), 10)
+	p1_2 := linear.NewEquation(linear.NewVector(10, 10, 10), 10)
 	s = test(6, func() (linear.System, error) { return s.Multiply(1, 10) }, linear.NewSystem(p1, p1_2, p2_2, p3))
 	s = test(7, func() (linear.System, error) { return s.Add(0, 1, 0) }, linear.NewSystem(p1, p1_2, p2_2, p3))
-	p1_3 := linear.NewLine(linear.NewVector(10, 11, 10), 12)
+	p1_3 := linear.NewEquation(linear.NewVector(10, 11, 10), 12)
 	s = test(8, func() (linear.System, error) { return s.Add(0, 1, 1) }, linear.NewSystem(p1, p1_3, p2_2, p3))
-	p0_1 := linear.NewLine(linear.NewVector(-10, -10, -10), -10)
+	p0_1 := linear.NewEquation(linear.NewVector(-10, -10, -10), -10)
 	s = test(9, func() (linear.System, error) { return s.Add(1, 0, -1) }, linear.NewSystem(p0_1, p1_3, p2_2, p3))
 	fmt.Println("quiz 9 complete...")
 }
@@ -314,86 +314,86 @@ func test(number int, operation func() (linear.System, error), expected linear.S
 }
 
 func quiz10() { // Triangular form
-	p1 := linear.NewLine(linear.NewVector(1, 1, 1), 1)
-	p2 := linear.NewLine(linear.NewVector(0, 1, 1), 2)
+	p1 := linear.NewEquation(linear.NewVector(1, 1, 1), 1)
+	p2 := linear.NewEquation(linear.NewVector(0, 1, 1), 2)
 	s := linear.NewSystem(p1, p2)
 	test(1, func() (linear.System, error) { return s.TriangularForm() }, linear.NewSystem(p1, p2))
 
-	p1 = linear.NewLine(linear.NewVector(1, 1, 1), 1)
-	p2 = linear.NewLine(linear.NewVector(1, 1, 1), 2)
+	p1 = linear.NewEquation(linear.NewVector(1, 1, 1), 1)
+	p2 = linear.NewEquation(linear.NewVector(1, 1, 1), 2)
 	s = linear.NewSystem(p1, p2)
-	test(2, func() (linear.System, error) { return s.TriangularForm() }, linear.NewSystem(p1, linear.NewLine(linear.NewVector(0, 0, 0), 1)))
+	test(2, func() (linear.System, error) { return s.TriangularForm() }, linear.NewSystem(p1, linear.NewEquation(linear.NewVector(0, 0, 0), 1)))
 
-	p1 = linear.NewLine(linear.NewVector(1, 1, 1), 1)
-	p2 = linear.NewLine(linear.NewVector(0, 1, 0), 2)
-	p3 := linear.NewLine(linear.NewVector(1, 1, -1), 3)
-	p4 := linear.NewLine(linear.NewVector(1, 0, -2), 2)
+	p1 = linear.NewEquation(linear.NewVector(1, 1, 1), 1)
+	p2 = linear.NewEquation(linear.NewVector(0, 1, 0), 2)
+	p3 := linear.NewEquation(linear.NewVector(1, 1, -1), 3)
+	p4 := linear.NewEquation(linear.NewVector(1, 0, -2), 2)
 	s = linear.NewSystem(p1, p2, p3, p4)
-	expected := linear.NewSystem(p1, p2, linear.NewLine(linear.NewVector(0, 0, -2), 2), linear.NewLine(linear.NewVector(), 0))
+	expected := linear.NewSystem(p1, p2, linear.NewEquation(linear.NewVector(0, 0, -2), 2), linear.NewEquation(linear.NewVector(), 0))
 	test(3, func() (linear.System, error) { return s.TriangularForm() }, expected)
 
-	p1 = linear.NewLine(linear.NewVector(0, 1, 1), 1)
-	p2 = linear.NewLine(linear.NewVector(1, -1, 1), 2)
-	p3 = linear.NewLine(linear.NewVector(1, 2, -5), 3)
+	p1 = linear.NewEquation(linear.NewVector(0, 1, 1), 1)
+	p2 = linear.NewEquation(linear.NewVector(1, -1, 1), 2)
+	p3 = linear.NewEquation(linear.NewVector(1, 2, -5), 3)
 	s = linear.NewSystem(p1, p2, p3)
-	expected = linear.NewSystem(linear.NewLine(linear.NewVector(1, -1, 1), 2),
-		linear.NewLine(linear.NewVector(0, 1, 1), 1),
-		linear.NewLine(linear.NewVector(0, 0, -9), -2))
+	expected = linear.NewSystem(linear.NewEquation(linear.NewVector(1, -1, 1), 2),
+		linear.NewEquation(linear.NewVector(0, 1, 1), 1),
+		linear.NewEquation(linear.NewVector(0, 0, -9), -2))
 	test(4, func() (linear.System, error) { return s.TriangularForm() }, expected)
 }
 
 func quiz11() { // Coding RREF.
-	p1 := linear.NewLine(linear.NewVector(1, 1, 1), 1)
-	p2 := linear.NewLine(linear.NewVector(0, 1, 1), 2)
+	p1 := linear.NewEquation(linear.NewVector(1, 1, 1), 1)
+	p2 := linear.NewEquation(linear.NewVector(0, 1, 1), 2)
 	s := linear.NewSystem(p1, p2)
-	expected := linear.NewSystem(linear.NewLine(linear.NewVector(1, 0, 0), -1), p2)
+	expected := linear.NewSystem(linear.NewEquation(linear.NewVector(1, 0, 0), -1), p2)
 	test(1, func() (linear.System, error) { r, _, err := s.ComputeRREF(); return r, err }, expected)
 
-	p1 = linear.NewLine(linear.NewVector(1, 1, 1), 1)
-	p2 = linear.NewLine(linear.NewVector(1, 1, 1), 2)
+	p1 = linear.NewEquation(linear.NewVector(1, 1, 1), 1)
+	p2 = linear.NewEquation(linear.NewVector(1, 1, 1), 2)
 	s = linear.NewSystem(p1, p2)
-	expected = linear.NewSystem(p1, linear.NewLine(linear.NewVector(0, 0, 0), 1))
+	expected = linear.NewSystem(p1, linear.NewEquation(linear.NewVector(0, 0, 0), 1))
 	test(2, func() (linear.System, error) { r, _, err := s.ComputeRREF(); return r, err }, expected)
 
-	p1 = linear.NewLine(linear.NewVector(1, 1, 1), 1)
-	p2 = linear.NewLine(linear.NewVector(0, 1, 0), 2)
-	p3 := linear.NewLine(linear.NewVector(1, 1, -1), 3)
-	p4 := linear.NewLine(linear.NewVector(1, 0, -2), 2)
+	p1 = linear.NewEquation(linear.NewVector(1, 1, 1), 1)
+	p2 = linear.NewEquation(linear.NewVector(0, 1, 0), 2)
+	p3 := linear.NewEquation(linear.NewVector(1, 1, -1), 3)
+	p4 := linear.NewEquation(linear.NewVector(1, 0, -2), 2)
 	s = linear.NewSystem(p1, p2, p3, p4)
 	// See https://discussions.udacity.com/t/coding-rref-test-case-3/204986
-	expected = linear.NewSystem(linear.NewLine(linear.NewVector(1, 0, 0), 0), p2,
-		linear.NewLine(linear.NewVector(0, 0, 1), -1),
-		linear.NewLine(linear.NewVector(0, 0, 0), 0))
+	expected = linear.NewSystem(linear.NewEquation(linear.NewVector(1, 0, 0), 0), p2,
+		linear.NewEquation(linear.NewVector(0, 0, 1), -1),
+		linear.NewEquation(linear.NewVector(0, 0, 0), 0))
 	test(3, func() (linear.System, error) { r, _, err := s.ComputeRREF(); return r, err }, expected)
 
-	p1 = linear.NewLine(linear.NewVector(0, 1, 1), 1)
-	p2 = linear.NewLine(linear.NewVector(1, -1, 1), 2)
-	p3 = linear.NewLine(linear.NewVector(1, 2, -5), 3)
+	p1 = linear.NewEquation(linear.NewVector(0, 1, 1), 1)
+	p2 = linear.NewEquation(linear.NewVector(1, -1, 1), 2)
+	p3 = linear.NewEquation(linear.NewVector(1, 2, -5), 3)
 	s = linear.NewSystem(p1, p2, p3)
-	expected = linear.NewSystem(linear.NewLine(linear.NewVector(1, 0, 0), 23.0/9.0),
-		linear.NewLine(linear.NewVector(0, 1, 0), 7.0/9.0),
-		linear.NewLine(linear.NewVector(0, 0, 1), 2.0/9.0))
+	expected = linear.NewSystem(linear.NewEquation(linear.NewVector(1, 0, 0), 23.0/9.0),
+		linear.NewEquation(linear.NewVector(0, 1, 0), 7.0/9.0),
+		linear.NewEquation(linear.NewVector(0, 0, 1), 2.0/9.0))
 	test(4, func() (linear.System, error) { r, _, err := s.ComputeRREF(); return r, err }, expected)
 }
 
 func quiz12() { // Coding GE Solution
-	p1 := linear.NewLine(linear.NewVector(5.862, 1.178, -10.366), -8.15)
-	p2 := linear.NewLine(linear.NewVector(-2.931, -0.589, 5.183), -4.075)
+	p1 := linear.NewEquation(linear.NewVector(5.862, 1.178, -10.366), -8.15)
+	p2 := linear.NewEquation(linear.NewVector(-2.931, -0.589, 5.183), -4.075)
 	s := linear.NewSystem(p1, p2)
 	solution, noSolution, infiniteSolutions, _ := s.Solve()
 	fmt.Printf("q1: Solution: %v No Solution: %v Infinite Solutions: %v\n", solution, noSolution, infiniteSolutions)
 
-	p1 = linear.NewLine(linear.NewVector(8.631, 5.112, -1.816), -5.113)
-	p2 = linear.NewLine(linear.NewVector(4.315, 11.132, -5.27), -6.775)
-	p3 := linear.NewLine(linear.NewVector(-2.158, 3.01, -1.727), -0.831)
+	p1 = linear.NewEquation(linear.NewVector(8.631, 5.112, -1.816), -5.113)
+	p2 = linear.NewEquation(linear.NewVector(4.315, 11.132, -5.27), -6.775)
+	p3 := linear.NewEquation(linear.NewVector(-2.158, 3.01, -1.727), -0.831)
 	s = linear.NewSystem(p1, p2, p3)
 	solution, noSolution, infiniteSolutions, _ = s.Solve()
 	fmt.Printf("q2: Solution: %v No Solution: %v Infinite Solutions: %v\n", solution, noSolution, infiniteSolutions)
 
-	p1 = linear.NewLine(linear.NewVector(5.262, 2.739, -9.878), -3.441)
-	p2 = linear.NewLine(linear.NewVector(5.111, 6.358, 7.638), -2.152)
-	p3 = linear.NewLine(linear.NewVector(2.016, -9.924, -1.367), -9.278)
-	p4 := linear.NewLine(linear.NewVector(2.167, -13.543, -18.883), -10.567)
+	p1 = linear.NewEquation(linear.NewVector(5.262, 2.739, -9.878), -3.441)
+	p2 = linear.NewEquation(linear.NewVector(5.111, 6.358, 7.638), -2.152)
+	p3 = linear.NewEquation(linear.NewVector(2.016, -9.924, -1.367), -9.278)
+	p4 := linear.NewEquation(linear.NewVector(2.167, -13.543, -18.883), -10.567)
 	s = linear.NewSystem(p1, p2, p3, p4)
 	solution, noSolution, infiniteSolutions, _ = s.Solve()
 	fmt.Printf("q4: Solution: %v No Solution: %v Infinite Solutions: %v\n", solution, noSolution, infiniteSolutions)
@@ -404,8 +404,8 @@ func quiz13() { // Coding Parameterization
 	// There appears to be a bug in the tutorial code here, see answer at:
 	// https://github.com/omarrayward/Linear-Algebra-Refresher-Udacity/blob/master/linear_system.py
 	system := linear.NewSystem(
-		linear.NewLine(linear.NewVector(0.786, 0.786, 0.588), -0.714),
-		linear.NewLine(linear.NewVector(-0.131, -0.131, 0.244), 0.319)) // The tutorial shows -0.138, not -0.131
+		linear.NewEquation(linear.NewVector(0.786, 0.786, 0.588), -0.714),
+		linear.NewEquation(linear.NewVector(-0.131, -0.131, 0.244), 0.319)) // The tutorial shows -0.138, not -0.131
 
 	solution, noSolution, infiniteSolutions, _ := system.Solve()
 	fmt.Printf("q1: Solution: %v No Solution: %v Infinite Solutions: %v\n", solution, noSolution, infiniteSolutions)
@@ -416,9 +416,9 @@ func quiz13() { // Coding Parameterization
 
 	// Q2
 	system = linear.NewSystem(
-		linear.NewLine(linear.NewVector(8.631, 5.112, -1.816), -5.113),
-		linear.NewLine(linear.NewVector(4.315, 11.132, -5.27), -6.775),
-		linear.NewLine(linear.NewVector(-2.158, 3.01, -1.727), -0.831))
+		linear.NewEquation(linear.NewVector(8.631, 5.112, -1.816), -5.113),
+		linear.NewEquation(linear.NewVector(4.315, 11.132, -5.27), -6.775),
+		linear.NewEquation(linear.NewVector(-2.158, 3.01, -1.727), -0.831))
 	solution, noSolution, infiniteSolutions, _ = system.Solve()
 	fmt.Printf("q2: Solution: %v No Solution: %v Infinite Solutions: %v\n", solution, noSolution, infiniteSolutions)
 	if infiniteSolutions {
@@ -428,10 +428,10 @@ func quiz13() { // Coding Parameterization
 
 	// Q3
 	system = linear.NewSystem(
-		linear.NewLine(linear.NewVector(0.935, 1.76, -9.365), -9.955),
-		linear.NewLine(linear.NewVector(0.187, 0.352, -1.873), -1.991),
-		linear.NewLine(linear.NewVector(0.374, 0.704, -3.746), -3.982),
-		linear.NewLine(linear.NewVector(-0.561, -1.056, 5.619), 5.973))
+		linear.NewEquation(linear.NewVector(0.935, 1.76, -9.365), -9.955),
+		linear.NewEquation(linear.NewVector(0.187, 0.352, -1.873), -1.991),
+		linear.NewEquation(linear.NewVector(0.374, 0.704, -3.746), -3.982),
+		linear.NewEquation(linear.NewVector(-0.561, -1.056, 5.619), 5.973))
 	solution, noSolution, infiniteSolutions, _ = system.Solve()
 	fmt.Printf("q3: Solution: %v No Solution: %v Infinite Solutions: %v\n", solution, noSolution, infiniteSolutions)
 	if infiniteSolutions {
